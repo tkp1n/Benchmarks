@@ -1,0 +1,1 @@
+docker run -d --network=SELF --log-opt max-size=10m --log-opt max-file=3 --name benchmarks-server --restart always benchmarks powershell "dotnet published/BenchmarksServer.dll -n 10.10.10.5 --url http://*:5001 --hardware PHYSICAL --hardware-version CITRINE --postgresql foo --mysql foo --mssql foo --mongodb foo"
