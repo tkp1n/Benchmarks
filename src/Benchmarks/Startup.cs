@@ -170,8 +170,8 @@ namespace Benchmarks
                 if (Scenarios.MvcViews || Scenarios.Any("MvcDbFortunes"))
                 {
                     services
-                        .AddControllersWithViews()
                         .AddRazorPages()
+                        .AddControllersWithViews()
                         .AddNewtonsoftJson()
                         ;
                 }
