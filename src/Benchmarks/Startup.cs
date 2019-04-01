@@ -170,7 +170,6 @@ namespace Benchmarks
                 if (Scenarios.MvcViews || Scenarios.Any("MvcDbFortunes"))
                 {
                     services
-                        .AddRazorPages()
                         .AddControllersWithViews()
                         .AddNewtonsoftJson()
                         ;
@@ -327,10 +326,6 @@ namespace Benchmarks
                 app.UseEndpoints(endpoints =>
                 {
                     endpoints.MapControllers();
-                    if (Scenarios.MvcViews || Scenarios.Any("MvcDbFortunes"))
-                    {
-                        endpoints.MapRazorPages();
-                    }
                 });
             }
 #endif
