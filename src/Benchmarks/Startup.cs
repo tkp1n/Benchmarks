@@ -146,26 +146,17 @@ namespace Benchmarks
                 });
             }
 
+#if NETCOREAPP2_1 || NETCOREAPP2_2
             if (Scenarios.Any("Mvc"))
             {
                 var mvcBuilder = services
                     .AddMvcCore()
-#if NETCOREAPP2_1 || NETCOREAPP2_2
-                    .SetCompatibilityVersion(CompatibilityVersion.Latest)
-#endif
-;
+                    .SetCompatibilityVersion(CompatibilityVersion.Latest);
 
                 if (Scenarios.MvcJson || Scenarios.Any("MvcDbSingle") || Scenarios.Any("MvcDbMulti"))
                 {
-#if NETCOREAPP2_1 || NETCOREAPP2_2
                     mvcBuilder.AddJsonFormatters();
-#elif NETCOREAPP3_0
-                    mvcBuilder.AddNewtonsoftJson();
-#else
-#error "Unsupported TFM"
-#endif
                 }
-
                 if (Scenarios.MvcViews || Scenarios.Any("MvcDbFortunes"))
                 {
                     mvcBuilder
@@ -173,6 +164,24 @@ namespace Benchmarks
                         .AddRazorViewEngine();
                 }
             }
+#elif NETCOREAPP3_0
+            if (Scenarios.Any("Mvc"))
+            {
+                IMvcBuilder mvcBuilder;
+                if (Scenarios.MvcViews || Scenarios.Any("MvcDbFortunes"))
+                {
+                    mvcBuilder = services.AddControllersWithViews()
+                        .AddRazorPages();
+                }
+                else
+                {
+                    mvcBuilder = services.AddControllers();
+                }
+
+                mvcBuilder.AddNewtonsoftJson();
+            }
+#error "Unsupported TFM"
+#endif
 
             if (Scenarios.Any("MemoryCache"))
             {
@@ -301,10 +310,24 @@ namespace Benchmarks
                 app.UseFortunesEf();
             }
 
+#if NETCOREAPP2_1 || NETCOREAPP2_2
             if (Scenarios.Any("Mvc"))
             {
                 app.UseMvc();
             }
+#elif NETCOREAPP3_0
+            if (Scenarios.Any("Mvc"))
+            {
+                app.UseEndpoints(endpoints =>
+                {
+                    endpoints.MapControllers();
+                    if (Scenarios.MvcViews || Scenarios.Any("MvcDbFortunes"))
+                    {
+                        endpoints.MapRazorPages();
+                    }
+                });
+            }
+#endif
 
             if (Scenarios.MemoryCachePlaintext)
             {
