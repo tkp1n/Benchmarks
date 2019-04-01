@@ -171,7 +171,6 @@ namespace Benchmarks
                 {
                     services
                         .AddControllersWithViews()
-                        .AddRazorPages()
                         .AddNewtonsoftJson()
                         ;
                 }
