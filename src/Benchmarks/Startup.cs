@@ -183,6 +183,7 @@ namespace Benchmarks
                         ;
                 }
             }
+#else
 #error "Unsupported TFM"
 #endif
 
