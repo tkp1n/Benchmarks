@@ -167,18 +167,21 @@ namespace Benchmarks
 #elif NETCOREAPP3_0
             if (Scenarios.Any("Mvc"))
             {
-                IMvcBuilder mvcBuilder;
                 if (Scenarios.MvcViews || Scenarios.Any("MvcDbFortunes"))
                 {
-                    mvcBuilder = services.AddControllersWithViews()
-                        .AddRazorPages();
+                    services
+                        .AddControllersWithViews()
+                        .AddRazorPages()
+                        .AddNewtonsoftJson()
+                        ;
                 }
                 else
                 {
-                    mvcBuilder = services.AddControllers();
+                    services
+                        .AddControllers()
+                        .AddNewtonsoftJson()
+                        ;
                 }
-
-                mvcBuilder.AddNewtonsoftJson();
             }
 #error "Unsupported TFM"
 #endif
