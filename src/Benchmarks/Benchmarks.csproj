@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>$(BenchmarksTargetFramework)</TargetFramework>
     <OutputType>Exe</OutputType>
+    <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <NETCoreAppImplicitPackageVersion>$(BenchmarksNETCoreAppImplicitPackageVersion)</NETCoreAppImplicitPackageVersion>
     <RuntimeFrameworkVersion>$(MicrosoftNETCoreAppPackageVersion)</RuntimeFrameworkVersion>
     <!-- Prevent the SDK from validating the supported TFM. -->

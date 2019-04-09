@@ -23,14 +23,12 @@ namespace Benchmarks
 {
     public class Program
     {
-        public static string[] Args;
         public static string Server;
         public static string Protocol;
+        public static Scenarios Scenarios;
 
         public static void Main(string[] args)
         {
-            Args = args;
-
             Console.WriteLine();
             Console.WriteLine("ASP.NET Core Benchmarks");
             Console.WriteLine("-----------------------");
@@ -48,25 +46,60 @@ namespace Benchmarks
 
             Protocol = config["protocol"] ?? "";
 
-            var webHostBuilder = new WebHostBuilder()
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseConfiguration(config)
-                .UseStartup<Startup>()
-                .ConfigureLogging(loggerFactory =>
-                {
-                    if (Enum.TryParse(config["LogLevel"], out LogLevel logLevel))
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddSingleton(new ConsoleArgs(args))
+                           .AddSingleton<IScenariosConfiguration, ConsoleHostScenariosConfiguration>()
+                           .AddSingleton<Scenarios>();
+            var services = serviceCollection.BuildServiceProvider();
+            Scenarios = services.GetRequiredService<Scenarios>();
+
+#if NETCOREAPP2_1 || NETCOREAPP2_2
+            var webHostBuilder = new WebHostBuilder();
+            ConfigureWebHostBuilder(webHostBuilder, args, config);
+            var host = webHostBuilder.Build();
+#elif NETCOREAPP3_0
+            var hostBuilder = new HostBuilder();
+            hostBuilder.ConfigureWebHostDefaults(webHostBuilder =>
+            {
+                ConfigureWebHostBuilder(webHostBuilder, args, config);
+            });
+            var host = hostBuilder.Build();
+#error "Unsupported TFM"
+#endif
+            Console.WriteLine($"Using server {Server}");
+            Console.WriteLine($"Server GC is currently {(GCSettings.IsServerGC ? "ENABLED" : "DISABLED")}");
+
+            var nonInteractiveValue = config["nonInteractive"];
+            if (nonInteractiveValue == null || !bool.Parse(nonInteractiveValue))
+            {
+                StartInteractiveConsoleThread();
+            }
+
+            host.Run();
+        }
+
+        private static void ConfigureWebHostBuilder(IWebHostBuilder webHostBuilder, string[] args, IConfigurationRoot config)
+        {
+            webHostBuilder.UseContentRoot(Directory.GetCurrentDirectory())
+                   .UseConfiguration(config)
+                   .UseStartup<Startup>()
+                   .ConfigureLogging(loggerFactory =>
                     {
-                        Console.WriteLine($"Console Logging enabled with level '{logLevel}'");
-                        loggerFactory.AddConsole().SetMinimumLevel(logLevel);
-                    }
-                })
-                .ConfigureServices(services => services
-                    .AddSingleton(new ConsoleArgs(args))
-                    .AddSingleton<IScenariosConfiguration, ConsoleHostScenariosConfiguration>()
-                    .AddSingleton<Scenarios>()
-                )
-                .UseDefaultServiceProvider(
-                    (context, options) => options.ValidateScopes = context.HostingEnvironment.IsDevelopment());
+                        if (Enum.TryParse(config["LogLevel"], out LogLevel logLevel))
+                        {
+                            Console.WriteLine($"Console Logging enabled with level '{logLevel}'");
+                            loggerFactory.AddConsole().SetMinimumLevel(logLevel);
+                        }
+                    })
+                    .ConfigureAppConfiguration((context, builder) =>
+                    {
+                        builder.AddJsonFile("appsettings.json")
+                               .AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true)
+                               .AddEnvironmentVariables()
+                               .AddCommandLine(args);
+                    })
+                    .UseDefaultServiceProvider(
+                        (context, options) => options.ValidateScopes = context.HostingEnvironment.IsDevelopment());
 
             bool? threadPoolDispatching = null;
             if (String.Equals(Server, "Kestrel", StringComparison.OrdinalIgnoreCase))
@@ -102,7 +135,7 @@ namespace Benchmarks
                 });
 
                 var threadCount = GetThreadCount(config);
-                var kestrelTransport = config["KestrelTransport"];
+                var kestrelTransport = config["KestrelTransport"] ?? "Sockets";
 
                 if (threadPoolDispatching == false || string.Equals(kestrelTransport, "Libuv", StringComparison.OrdinalIgnoreCase))
                 {
@@ -154,33 +187,20 @@ namespace Benchmarks
             {
                 webHostBuilder = webHostBuilder.UseHttpSys();
             }
-//#if NETCOREAPP2_2 || NETCOREAPP3_0
-//            else if (String.Equals(Server, "IISInProcess", StringComparison.OrdinalIgnoreCase))
-//            {
-//                webHostBuilder = webHostBuilder.UseIIS();
-//            }
-//#endif
-//            else if (String.Equals(Server, "IISOutOfProcess", StringComparison.OrdinalIgnoreCase))
-//            {
-//                webHostBuilder = webHostBuilder.UseKestrel().UseIISIntegration();
-//            }
+            //#if NETCOREAPP2_2 || NETCOREAPP3_0
+            //            else if (String.Equals(Server, "IISInProcess", StringComparison.OrdinalIgnoreCase))
+            //            {
+            //                webHostBuilder = webHostBuilder.UseIIS();
+            //            }
+            //#endif
+            //            else if (String.Equals(Server, "IISOutOfProcess", StringComparison.OrdinalIgnoreCase))
+            //            {
+            //                webHostBuilder = webHostBuilder.UseKestrel().UseIISIntegration();
+            //            }
             else
             {
                 throw new InvalidOperationException($"Unknown server value: {Server}");
             }
-
-            var webHost = webHostBuilder.Build();
-
-            Console.WriteLine($"Using server {Server}");
-            Console.WriteLine($"Server GC is currently {(GCSettings.IsServerGC ? "ENABLED" : "DISABLED")}");
-
-            var nonInteractiveValue = config["nonInteractive"];
-            if (nonInteractiveValue == null || !bool.Parse(nonInteractiveValue))
-            {
-                StartInteractiveConsoleThread();
-            }
-
-            webHost.Run();
         }
 
         private static void StartInteractiveConsoleThread()

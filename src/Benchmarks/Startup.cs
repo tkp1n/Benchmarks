@@ -22,22 +22,13 @@ namespace Benchmarks
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment hostingEnv, Scenarios scenarios)
+        public Startup(IConfiguration configuration)
         {
-            // Set up configuration sources.
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(hostingEnv.ContentRootPath)
-                .AddJsonFile("appsettings.json")
-                .AddJsonFile($"appsettings.{hostingEnv.EnvironmentName}.json", optional: true)
-                .AddEnvironmentVariables()
-                .AddCommandLine(Program.Args);
-
-            Configuration = builder.Build();
-
-            Scenarios = scenarios;
+            Configuration = configuration;
+            Scenarios = Program.Scenarios;
         }
 
-        public IConfigurationRoot Configuration { get; set; }
+        public IConfiguration Configuration { get; set; }
 
         public Scenarios Scenarios { get; }
 
@@ -45,8 +36,6 @@ namespace Benchmarks
         {
             services.Configure<AppSettings>(Configuration);
 
-            // We re-register the Scenarios as an instance singleton here to avoid it being created again due to the
-            // registration done in Program.Main
             services.AddSingleton(Scenarios);
 
             // Common DB services
