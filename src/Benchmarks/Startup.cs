@@ -171,12 +171,14 @@ namespace Benchmarks
                 {
                     services
                         .AddControllersWithViews()
+                        .AddNewtonsoftJson()
                         ;
                 }
                 else
                 {
                     services
                         .AddControllers()
+                        .AddNewtonsoftJson()
                         ;
                 }
             }
