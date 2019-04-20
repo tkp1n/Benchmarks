@@ -177,7 +177,6 @@ namespace Benchmarks
                 {
                     services
                         .AddControllers()
-                        .AddNewtonsoftJson()
                         ;
                 }
             }
