@@ -156,6 +156,11 @@ namespace Benchmarks.Configuration
                 .Where(p => p.Name.IndexOf(partialName, StringComparison.Ordinal) >= 0 && (bool)p.GetValue(this))
                 .Any();
 
+        public bool Is(string name) =>
+            typeof(Scenarios).GetTypeInfo().DeclaredProperties
+                .Where(p => p.Name.Equals(name, StringComparison.Ordinal) && (bool)p.GetValue(this))
+                .Any();
+
         public IEnumerable<EnabledScenario> GetEnabled() =>
             typeof(Scenarios).GetTypeInfo().DeclaredProperties
                 .Where(p => p.GetValue(this) is bool && (bool)p.GetValue(this))
