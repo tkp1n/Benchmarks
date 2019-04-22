@@ -27,7 +27,7 @@ namespace Benchmarks.Controllers
 
         [HttpGet("json")]
         [Produces("application/json")]
-        public object Json()
+        public List<WeatherForecast> Json()
         {
             var rng = new Random();
             return Enumerable.Range(1, 7).Select(index => new WeatherForecast
@@ -35,7 +35,7 @@ namespace Benchmarks.Controllers
                 Date = DateTime.Now.AddDays(index),
                 TemperatureC = rng.Next(-20, 55),
                 Summary = Summaries[rng.Next(Summaries.Length)]
-            }).ToArray();
+            }).ToList();
         }
 
         [HttpGet("view")]
