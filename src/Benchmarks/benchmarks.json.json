@@ -18,7 +18,7 @@
     "Path": "/mvc/json"
   },
   "MvcJsonNet": {
-    "Path": "/mvc/jsonnet"
+    "Path": "/mvc/json"
   },
   "DbSingleQueryRaw": {
     "Path": "/db/raw"
