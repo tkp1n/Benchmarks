@@ -185,10 +185,10 @@ namespace Benchmarks
                     builder = services.AddControllers();
                 }
 
-                if (Scenarios.Any("MvcJsonNet"))
-                {
-                    builder.AddNewtonsoftJson();
-                }
+                // if (Scenarios.Any("MvcJsonNet"))
+                // {
+                //     builder.AddNewtonsoftJson();
+                // }
             }
 #else
 #error "Unsupported TFM"
