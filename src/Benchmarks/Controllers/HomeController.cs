@@ -12,6 +12,11 @@ namespace Benchmarks.Controllers
     [Route("mvc")]
     public class HomeController : Controller
     {
+        private static string[] Summaries = new[]
+        {
+            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+        };
+
         [HttpGet("plaintext")]
         public IActionResult Plaintext()
         {
@@ -22,7 +27,13 @@ namespace Benchmarks.Controllers
         [Produces("application/json")]
         public object Json()
         {
-            return new { message = "Hello, World!" };
+            var rng = new Random();
+            return Enumerable.Range(1, 7).Select(index => new WeatherForecast
+            {
+                Date = DateTime.Now.AddDays(index),
+                TemperatureC = rng.Next(-20, 55),
+                Summary = Summaries[rng.Next(Summaries.Length)]
+            });
         }
 
         [HttpGet("view")]
@@ -45,5 +56,14 @@ namespace Benchmarks.Controllers
                 return response.Body.WriteAsync(_helloWorldPayload, 0, payloadLength);
             }
         }
+    }
+
+    public class WeatherForecast
+    {
+        public DateTime Date { get; set; }
+
+        public int TemperatureC { get; set; }
+
+        public string Summary { get; set; }
     }
 }
