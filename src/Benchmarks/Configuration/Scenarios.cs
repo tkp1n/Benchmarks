@@ -184,16 +184,16 @@ namespace Benchmarks.Configuration
                 return 2;
             }
 
-            var prop = typeof(Scenarios).GetTypeInfo().DeclaredProperties
-                .FirstOrDefault(p => string.Equals(name, "[all]", StringComparison.OrdinalIgnoreCase) || string.Equals(name, p.Name, StringComparer.OrdinalIgnoreCase));
+             var props = typeof(Scenarios).GetTypeInfo().DeclaredProperties
+                .Where(p => string.Equals(partialName, "[all]", StringComparison.OrdinalIgnoreCase) || p.Name.Equals(partialName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
-            if (prop == null)            
+            foreach (var p in props)
             {
-                return 0;
+                p.SetValue(this, true);
             }
 
-            prop.SetValue(this, true);
-            return 1;
+            return props.Count;
         }
 
         public void EnableDefault()
