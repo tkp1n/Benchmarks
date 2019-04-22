@@ -25,14 +25,6 @@ namespace Benchmarks.Controllers
             return new { message = "Hello, World!" };
         }
 
-        [HttpGet("jil")]
-        [Produces("application/json")]
-        [JilFormatter]
-        public object Jil()
-        {
-            return new { message = "Hello, World!" };
-        }
-
         [HttpGet("view")]
         public ViewResult Index()
         {

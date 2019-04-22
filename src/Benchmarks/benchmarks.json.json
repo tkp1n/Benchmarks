@@ -14,14 +14,11 @@
   "Json": {
     "Path": "/json"
   },
-  "Jil": {
-    "Path": "/jil"
-  },
   "MvcJson": {
     "Path": "/mvc/json"
   },
-  "MvcJil": {
-    "Path": "/mvc/jil"
+  "MvcJsonNet": {
+    "Path": "/mvc/jsonnet"
   },
   "DbSingleQueryRaw": {
     "Path": "/db/raw"

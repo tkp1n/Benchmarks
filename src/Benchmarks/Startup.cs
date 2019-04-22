@@ -174,19 +174,20 @@ namespace Benchmarks
 
             if (Scenarios.Any("Mvc"))
             {
+                IMvcBuilder builder;
+
                 if (Scenarios.MvcViews || Scenarios.Any("MvcDbFortunes"))
                 {
-                    services
-                        .AddControllersWithViews()
-                        .AddNewtonsoftJson()
-                        ;
+                    builder = services.AddControllersWithViews();
                 }
                 else
                 {
-                    services
-                        .AddControllers()
-                        .AddNewtonsoftJson()
-                        ;
+                    builder = services.AddControllers();
+                }
+
+                if (Scenarios.Any("MvcJsonNet"))
+                {
+                    builder.AddNewtonsoftJson();
                 }
             }
 #else
@@ -224,11 +225,6 @@ namespace Benchmarks
             if (Scenarios.Json)
             {
                 app.UseJson();
-            }
-
-            if (Scenarios.Jil)
-            {
-                app.UseJil();
             }
 
             if (Scenarios.CopyToAsync)
