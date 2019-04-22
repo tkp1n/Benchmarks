@@ -176,24 +176,24 @@ namespace Benchmarks.Configuration
         public static string GetPath(Expression<Func<Scenarios, bool>> scenarioExpression) =>
             GetPaths(scenarioExpression)[0];
 
-        public int Enable(string partialName)
+        public int Enable(string name)
         {
-            if (string.Equals(partialName, "[default]", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(name, "[default]", StringComparison.OrdinalIgnoreCase))
             {
                 EnableDefault();
                 return 2;
             }
 
-            var props = typeof(Scenarios).GetTypeInfo().DeclaredProperties
-                .Where(p => string.Equals(partialName, "[all]", StringComparison.OrdinalIgnoreCase) || p.Name.StartsWith(partialName, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            var prop = typeof(Scenarios).GetTypeInfo().DeclaredProperties
+                .FirstOrDefault(p => string.Equals(name, "[all]", StringComparison.OrdinalIgnoreCase) || string.Equals(name, p.Name, StringComparer.OrdinalIgnoreCase));
 
-            foreach (var p in props)
+            if (prop == null)            
             {
-                p.SetValue(this, true);
+                return 0;
             }
 
-            return props.Count;
+            prop.SetValue(this, true);
+            return 1;
         }
 
         public void EnableDefault()
