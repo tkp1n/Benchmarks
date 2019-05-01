@@ -602,7 +602,15 @@ namespace BenchmarkServer
                                                 // Format is {used}M/GiB/{total}M/GiB
                                                 var workingSetRaw = data[1];
                                                 var usedMemoryRaw = workingSetRaw.Split('/')[0].Trim();
-                                                var cpu = Math.Round(double.Parse(cpuPercentRaw.Trim('%')) / Environment.ProcessorCount);
+                                                var cpu = double.Parse(cpuPercentRaw.Trim('%'));
+
+                                                // On Windows the CPU already takes the number or HT into account
+                                                if (OperatingSystem == OperatingSystem.Linux)
+                                                {
+                                                    cpu = cpu / Environment.ProcessorCount;
+                                                }
+
+                                                cpu = Math.Round(cpu);
 
                                                 // MiB, GiB, B ?
                                                 var factor = 1;
