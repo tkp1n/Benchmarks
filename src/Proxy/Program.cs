@@ -16,7 +16,7 @@ namespace Proxy
 {
     public class Program
     {
-        private static readonly HttpClient _httpClient = new HttpClient();
+        private static readonly HttpClient _httpClient = new HttpClient(new SocketsHttpHandler { UseProxy = false });
         private static readonly HttpClientPool _httpClientPool = new HttpClientPool(Environment.ProcessorCount * 2);
 
         private static string _scheme;
