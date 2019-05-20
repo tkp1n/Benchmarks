@@ -33,6 +33,11 @@ namespace Benchmarks.Middleware
 
         private static FluidTemplate Template = FluidTemplate.Parse(FortunesTemplate);
 
+        static MiddlewareHelpers()
+        {
+            TemplateContext.GlobalMemberAccessStrategy.Register<Fortune>();
+        }
+
         public static int GetMultipleQueriesQueryCount(HttpContext httpContext)
         {
             var queries = 1;
