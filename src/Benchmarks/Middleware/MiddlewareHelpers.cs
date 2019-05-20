@@ -20,6 +20,7 @@ namespace Benchmarks.Middleware
 <html>
 <head><title>Fortunes</title></head>
 <body>
+    {{ fortunes.size }}
     <table>
         <tr><th>id</th><th>message</th></tr>
         {% for item in fortunes %}
