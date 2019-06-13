@@ -1,0 +1,15 @@
+{
+  "Default": {
+    "Client": "BlazorIgnitor",
+
+    "Source": {
+      "Repository": "https://github.com/pranavkm/BlazorPerf.git",
+      "BranchOrCommit": "master",
+      "Project": "BlazorServerSIde.csproj"
+    },
+    "ReadyStateText": "Application started."
+  },
+  "Clicker": {
+    "ClientProperties": { "Scenario": "Clicker" }
+  }
+}
