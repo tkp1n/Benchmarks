@@ -1,12 +1,8 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Ignitor;
-using Microsoft.AspNetCore.SignalR.Client;
 
 namespace BenchmarksClient.Workers
 {
@@ -18,6 +14,7 @@ namespace BenchmarksClient.Workers
             var tasks = new Task[_clients.Count];
             for (var i = 0; i < _clients.Count; i++)
             {
+                var j = i;
                 var client = _clients[i];
 
                 tasks[i] = Task.Run(async () =>
@@ -27,6 +24,7 @@ namespace BenchmarksClient.Workers
 
                     while (!cancellationToken.IsCancellationRequested)
                     {
+                        Console.WriteLine("Navigating {0}", j);
                         await client.NavigateTo(links[link], cancellationToken);
                         await client.WaitUntil(hive => hive.TryFindElementById(links[link] + "_displayed", out _));
                         link = (link + 1) % links.Length;

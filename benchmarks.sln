@@ -163,6 +163,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventPipesAnalyzer", "src\E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ignitor", "src\Ignitor\Ignitor.csproj", "{6EC16FC0-B027-4426-BF1C-BAC47DB86DE3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IngitorClient", "src\IngitorClient\IngitorClient.csproj", "{22B1BC73-2753-4C5D-AB68-A57F9CE032BE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -299,6 +301,14 @@ Global
 		{6EC16FC0-B027-4426-BF1C-BAC47DB86DE3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6EC16FC0-B027-4426-BF1C-BAC47DB86DE3}.Release|x86.ActiveCfg = Release|Any CPU
 		{6EC16FC0-B027-4426-BF1C-BAC47DB86DE3}.Release|x86.Build.0 = Release|Any CPU
+		{22B1BC73-2753-4C5D-AB68-A57F9CE032BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22B1BC73-2753-4C5D-AB68-A57F9CE032BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22B1BC73-2753-4C5D-AB68-A57F9CE032BE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{22B1BC73-2753-4C5D-AB68-A57F9CE032BE}.Debug|x86.Build.0 = Debug|Any CPU
+		{22B1BC73-2753-4C5D-AB68-A57F9CE032BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22B1BC73-2753-4C5D-AB68-A57F9CE032BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22B1BC73-2753-4C5D-AB68-A57F9CE032BE}.Release|x86.ActiveCfg = Release|Any CPU
+		{22B1BC73-2753-4C5D-AB68-A57F9CE032BE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -329,6 +339,7 @@ Global
 		{0060F62B-7E63-4A2F-919F-2188EBE8BAA5} = {EF444B27-3CBA-4581-893A-7F6DB5527371}
 		{4B8AC913-92D3-4540-9E03-8D397313B58A} = {995FCFF9-E5F6-4BDD-8E5B-FBDEA21145F9}
 		{6EC16FC0-B027-4426-BF1C-BAC47DB86DE3} = {995FCFF9-E5F6-4BDD-8E5B-FBDEA21145F9}
+		{22B1BC73-2753-4C5D-AB68-A57F9CE032BE} = {995FCFF9-E5F6-4BDD-8E5B-FBDEA21145F9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C48AD7EE-82B1-4307-A869-3FC14AC9B21F}
