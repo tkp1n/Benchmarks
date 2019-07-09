@@ -15,18 +15,22 @@ namespace IngitorClient
 {
     class Program
     {
-        const string BaseUri = "http://localhost:8000/";
-        const int Count = 50000;
+        static string BaseUri = "http://40.74.243.167/";
+        static int Count = 1;
 
         static Task Main(string[] args)
         {
-            var cts = new CancellationTokenSource(30 * 1000);
-            return Navigator(cts.Token);
+            if (args.Length > 0)
+            {
+                Count = int.Parse(args[0]);
+            }
+
+            return Navigator(default);
         }
 
         private static async Task Navigator(CancellationToken cancellationToken)
         {
-            var links = new[] { "home", "fetchdata", "counter", "ticker" };
+            var links = new[] { "home", "fetchdata", "counter", };
             var tasks = new Task[Count];
             
             for (var i = 0; i < Count; i++)
@@ -43,9 +47,12 @@ namespace IngitorClient
 
                     while (!cancellationToken.IsCancellationRequested)
                     {
+                        Console.WriteLine("Clicking");
                         await client.NavigateTo(links[link], cancellationToken);
                         await client.WaitUntil(hive => hive.TryFindElementById(links[link] + "_displayed", out _));
                         link = (link + 1) % links.Length;
+
+                        await Task.Delay(100);
                     }
                 });
             }
