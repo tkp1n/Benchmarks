@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved. 
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information. 
 
+using Benchmarks.Configuration;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -11,7 +12,9 @@ namespace Benchmarks.Data
     {
         private const int MaxBatch = 500;
 
-        private static string[] _queries = new string[MaxBatch];
+        private static string[] _queries = new string[MaxBatch + 1];
+
+        public static DatabaseServer DatabaseServer;
 
         public static string Query(int batchSize)
         {
@@ -22,19 +25,16 @@ namespace Benchmarks.Data
 
             var sb = StringBuilderCache.Acquire();
 
-            sb.Append("UPDATE world SET randomNumber = temp.randomNumber FROM (VALUES ");
-
-            for (var i = 0; i < batchSize; i++)
+            if (DatabaseServer == DatabaseServer.PostgreSql)
             {
-                sb.Append($"(@Id_{i}, @Random_{i})");
-
-                if (i != batchSize - 1)
-                {
-                    sb.Append(", ");
-                }
+                sb.Append("UPDATE world SET randomNumber = temp.randomNumber FROM (VALUES ");
+                Enumerable.Range(0, batchSize - 1).ToList().ForEach(i => sb.Append($"(@Id_{i}, @Random_{i}), "));
+                sb.Append($"(@Id_{batchSize - 1}, @Random_{batchSize}) ORDER BY 1) AS temp(id, randomNumber) WHERE temp.id = world.id");
             }
-
-            sb.Append(" ORDER BY 1) AS temp(id, randomNumber) WHERE temp.id = world.id");
+            else
+            {
+                Enumerable.Range(0, batchSize).ToList().ForEach(i => sb.Append($"UPDATE world SET randomnumber = @Random_{i} WHERE id = @Id_{i};"));
+            }
 
             return _queries[batchSize] = StringBuilderCache.GetStringAndRelease(sb);
         }
