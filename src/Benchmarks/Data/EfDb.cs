@@ -32,7 +32,7 @@ namespace Benchmarks.Data
         {
             var id = _random.Next(1, 10001);
 
-            return _firstWorldQuery(_dbContext, id);
+            return _dbContext.World.FirstAsync(w => w.Id == id);
         }
 
         public async Task<World[]> LoadMultipleQueriesRows(int count)
@@ -60,7 +60,7 @@ namespace Benchmarks.Data
             for (var i = 0; i < count; i++)
             {
                 var id = _random.Next(1, 10001);
-                var result = await _firstWorldTrackedQuery(_dbContext, id);
+                var result = await _dbContext.World.AsTracking().FirstAsync(w => w.Id == id);
 
                 _dbContext.Entry(result).Property("RandomNumber").CurrentValue = _random.Next(1, 10001);
                 results[i] = result;                
@@ -80,7 +80,7 @@ namespace Benchmarks.Data
 #endif
         public async Task<IEnumerable<Fortune>> LoadFortunesRows()
         {
-            var result = await _fortunesQuery(_dbContext).ToListAsync();
+            var result = await _dbContext.Fortune.ToListAsync();
 
             result.Add(new Fortune { Message = "Additional fortune added at request time." });
             result.Sort();
