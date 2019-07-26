@@ -29,7 +29,7 @@ namespace Benchmarks.Data
             {
                 sb.Append("UPDATE world SET randomNumber = temp.randomNumber FROM (VALUES ");
                 Enumerable.Range(0, batchSize - 1).ToList().ForEach(i => sb.Append($"(@Id_{i}, @Random_{i}), "));
-                sb.Append($"(@Id_{batchSize - 1}, @Random_{batchSize}) ORDER BY 1) AS temp(id, randomNumber) WHERE temp.id = world.id");
+                sb.Append($"(@Id_{batchSize - 1}, @Random_{batchSize - 1}) ORDER BY 1) AS temp(id, randomNumber) WHERE temp.id = world.id");
             }
             else
             {
