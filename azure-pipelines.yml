@@ -1,0 +1,10 @@
+trigger:
+- master
+
+jobs:
+- template: .azure/default-build.yml
+  parameters:
+    agentOs: Windows
+    beforeBuild:
+    - powershell: "& echo test"
+      displayName: testing
