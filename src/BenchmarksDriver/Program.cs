@@ -31,6 +31,7 @@ namespace BenchmarksDriver
         private static bool _quiet;
         private static bool _displayOutput;
         private static TimeSpan _timeout = TimeSpan.FromMinutes(5);
+        private static string[] _commandLineArgs;
 
         private static readonly HttpClient _httpClient;
         private static readonly HttpClientHandler _httpClientHandler;
@@ -121,6 +122,8 @@ namespace BenchmarksDriver
                 }
             }
 
+            _commandLineArgs = args;
+
             var app = new CommandLineApplication()
             {
                 Name = "BenchmarksDriver",
@@ -208,7 +211,7 @@ namespace BenchmarksDriver
                 "Git repository containing the project to test.", CommandOptionType.SingleValue);
             _branchOption = app.Option("-b|--branch",
                 "Git repository containing the project to test.", CommandOptionType.SingleValue);
-            _hashOption = app.Option("-h|--hash",
+            _hashOption = app.Option("--hash",
                 "Git repository containing the project to test.", CommandOptionType.SingleValue);
             var sourceOption = app.Option("-src|--source",
                 "Local folder containing the project to test.", CommandOptionType.SingleValue);
@@ -376,7 +379,7 @@ namespace BenchmarksDriver
                     Console.WriteLine($"The options --iterations and --span can't be used together.");
 
                     app.ShowHelp();
-                    return 10;
+                    return Task.FromResult(10);
                 }
 
                 var server = serverOption.Value();
@@ -400,8 +403,12 @@ namespace BenchmarksDriver
                     (excludeOption.HasValue() && !int.TryParse(excludeOption.Value(), result: out exclude)))
                 {
                     app.ShowHelp();
-                    return 2;
+                    return Task.FromResult(2);
                 }
+
+                HideConsoleArg(server);
+                HideConsoleArg(client);
+                HideConsoleArg(sqlConnectionString);
 
                 if (sqlTableOption.HasValue())
                 {
@@ -430,7 +437,7 @@ namespace BenchmarksDriver
                     catch
                     {
                         Console.WriteLine($"Job definition '{jobDefinitionPathOrUrl}' could not be loaded.");
-                        return 7;
+                        return Task.FromResult(7);
                     }
 
                     jobDefinitions = JsonConvert.DeserializeObject<JobDefinition>(jobDefinitionContent);
@@ -446,7 +453,7 @@ namespace BenchmarksDriver
                             Console.WriteLine($"Job named '{scenarioName}' not found in the job definition file.");
                         }
 
-                        return 7;
+                        return Task.FromResult(7);
                     }
                     else
                     {
@@ -466,7 +473,7 @@ namespace BenchmarksDriver
                         !dockerFileOption.HasValue())
                     {
                         Console.WriteLine($"Repository or source folder and project are mandatory when no job definition is specified.");
-                        return 9;
+                        return Task.FromResult(9);
                     }
 
                     jobDefinitions = new JobDefinition();
@@ -498,7 +505,7 @@ namespace BenchmarksDriver
                     {
                         Console.WriteLine($"Scenario '{scenarioName}' does not support {pathOption.LongName} '{pathOption.Value()}'. Choose from:");
                         Console.WriteLine($"'{string.Join("', '", jobOptions.Paths)}'");
-                        return 6;
+                        return Task.FromResult(6);
                     }
                 }
 
@@ -529,7 +536,7 @@ namespace BenchmarksDriver
                         else
                         {
                             Console.WriteLine("Invalid memory limit value");
-                            return -1;
+                            return Task.FromResult(-1);
                         }
                     }
                     else if (memoryLimitValue.EndsWith("gb", StringComparison.OrdinalIgnoreCase))
@@ -541,7 +548,7 @@ namespace BenchmarksDriver
                         else
                         {
                             Console.WriteLine("Invalid memory limit value");
-                            return -1;
+                            return Task.FromResult(-1);
                         }
                     }
                     else if (memoryLimitValue.EndsWith("kb", StringComparison.OrdinalIgnoreCase))
@@ -553,7 +560,7 @@ namespace BenchmarksDriver
                         else
                         {
                             Console.WriteLine("Invalid memory limit value");
-                            return -1;
+                            return Task.FromResult(-1);
                         }
                     }
                     else if (memoryLimitValue.EndsWith("b", StringComparison.OrdinalIgnoreCase))
@@ -565,7 +572,7 @@ namespace BenchmarksDriver
                         else
                         {
                             Console.WriteLine("Invalid memory limit value");
-                            return -1;
+                            return Task.FromResult(-1);
                         }
                     }
                     else
@@ -577,7 +584,7 @@ namespace BenchmarksDriver
                         else
                         {
                             Console.WriteLine("Invalid memory limit value");
-                            return -1;
+                            return Task.FromResult(-1);
                         }
                     }
                 }
@@ -817,7 +824,7 @@ namespace BenchmarksDriver
                             if (index == -1)
                             {
                                 Console.WriteLine($"Invalid environment variable, '=' not found: '{env}'");
-                                return 9;
+                                return Task.FromResult(9);
                             }
                         }
                         else if (index == env.Length - 1)
@@ -851,7 +858,7 @@ namespace BenchmarksDriver
                 if (diffOption.HasValue() && (!descriptionOption.HasValue() || String.IsNullOrWhiteSpace(descriptionOption.Value())))
                 {
                     Console.WriteLine($"The --description argument is mandatory when using --diff.");
-                    return -1;
+                    return Task.FromResult(-1);
                 }
 
                 // Check all attachments exist
@@ -865,7 +872,7 @@ namespace BenchmarksDriver
                         if (!filename.Contains("*") && !filename.Contains("http") && !File.Exists(filename))
                         {
                             Console.WriteLine($"Output File '{filename}' could not be loaded.");
-                            return 8;
+                            return Task.FromResult(8);
                         }
                     }
                 }
@@ -878,7 +885,7 @@ namespace BenchmarksDriver
                         if (!File.Exists(scriptFile))
                         {
                             Console.WriteLine($"Script file '{scriptFile}' could not be loaded.");
-                            return 8;
+                            return Task.FromResult(8);
                         }
                     }
                 }
@@ -894,7 +901,7 @@ namespace BenchmarksDriver
                     if (!Enum.TryParse<Worker>(clientNameOption.Value(), ignoreCase: true, result: out var worker))
                     {
                         Log($"Could not find worker {clientNameOption.Value()}");
-                        return 9;
+                        return Task.FromResult(9);
                     }
 
                     _clientJob.Client = worker;
@@ -971,7 +978,7 @@ namespace BenchmarksDriver
                         if (index == -1)
                         {
                             Console.WriteLine($"Invalid property variable, '=' not found: '{property}'");
-                            return 9;
+                            return Task.FromResult(9);
                         }
                         else
                         {
@@ -1025,7 +1032,7 @@ namespace BenchmarksDriver
                         if (segments.Length != 2)
                         {
                             Console.WriteLine($"Invalid http header, '=' not found: '{header}'");
-                            return 9;
+                            return Task.FromResult(9);
                         }
 
                         _clientJob.Headers[segments[0].Trim()] = segments[1].Trim();
@@ -1068,7 +1075,7 @@ namespace BenchmarksDriver
                     requiredOperatingSystem,
                     saveOption,
                     diffOption
-                    ).Result;
+                    );
             });
 
             // Resolve reponse files from urls
@@ -1681,6 +1688,11 @@ namespace BenchmarksDriver
                                     Log($"FAILED: The trace was not successful");
                                 }
                             }
+
+                            ReplaceOrAddConsoleArg("--sdk", serverJob.SdkVersion);
+                            ReplaceOrAddConsoleArg("-dotnet|--runtimeVersion", serverJob.RuntimeVersion);
+                            ReplaceOrAddConsoleArg("-aspnet|--aspnetCoreVersion", serverJob.AspNetCoreVersion);
+                            Console.WriteLine($"Command line arguments: dotnet run {string.Join(' ', _commandLineArgs)}");
 
                             var shouldComputeResults = results.Any() && iterations == i && !IsConsoleApp;
 
@@ -2507,6 +2519,55 @@ namespace BenchmarksDriver
             }
 
             return result;
+        }
+
+        private static void HideConsoleArg(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+            {
+                return;
+            }
+
+            for (var i = 0; i < _commandLineArgs.Length; i++)
+            {
+                if (_commandLineArgs[i].Contains(content))
+                {
+                    _commandLineArgs[i] = _commandLineArgs[i].Replace(content, "*****");
+                }
+            }
+        }
+
+        private static void ReplaceOrAddConsoleArg(string option, string replaceValue)
+        {
+            if (string.IsNullOrEmpty(option))
+            {
+                return;
+            }
+
+            var flags = option.Split("|");
+
+            foreach (var flag in flags)
+            {
+                for (var i = 0; i < _commandLineArgs.Length; i++)
+                {
+                    if (_commandLineArgs[i].Contains(flag))
+                    {
+                        i++;
+                        if (i >= _commandLineArgs.Length)
+                        {
+                            return;
+                        }
+                        _commandLineArgs[i] = replaceValue;
+                        return;
+                    }
+                }
+            }
+
+            var temp = new string[_commandLineArgs.Length + 2];
+            _commandLineArgs.CopyTo(temp, 0);
+            temp[_commandLineArgs.Length] = flags[0];
+            temp[_commandLineArgs.Length + 1] = replaceValue;
+            _commandLineArgs = temp;
         }
 
         // ANSI Console mode support

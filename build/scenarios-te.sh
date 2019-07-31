@@ -74,7 +74,7 @@ for s in ${BENCHMARKS_SERVER//,/ }
 do
     for job in "${jobs[@]}"
     do
-        echo "New job  on '$s': $job"
+        echo "New job on '$s': $job"
         dotnet $ROOT/.build/BenchmarksDriver/BenchmarksDriver.dll -s $s -c $BENCHMARKS_CLIENT $job -q "$BENCHMARKS_SQL" $BENCHMARKS_ARGS
         # error code in $?
     done
