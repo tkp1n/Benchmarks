@@ -581,7 +581,7 @@ namespace BenchmarkServer
                                             // Check the container is still running
                                             ProcessUtil.Run("docker", "inspect -f {{.State.Running}} " + dockerContainerId,
                                                 outputDataReceived: d => inspect += d,
-                                                log: false, throwOnError: false);
+                                                log: true, throwOnError: false);
 
                                             if (String.IsNullOrEmpty(inspect) || inspect.Contains("false"))
                                             {
@@ -594,7 +594,7 @@ namespace BenchmarkServer
 
                                                 var result = ProcessUtil.Run("docker", "container stats --no-stream --format \"{{.CPUPerc}}-{{.MemUsage}}\" " + dockerContainerId,
                                                     outputDataReceived: d => stats += d,
-                                                    log: false, throwOnError: false);
+                                                    log: true, throwOnError: false);
 
                                                 if (String.IsNullOrEmpty(stats))
                                                 {
@@ -608,7 +608,7 @@ namespace BenchmarkServer
                                                     var usedMemoryRaw = workingSetRaw.Split('/')[0].Trim();
                                                     var cpu = double.Parse(cpuPercentRaw.Trim('%'));
 
-                                                    // On Windows the CPU already takes the number or HT into account
+                                                    // On Windows the CPU already takes the number of HT into account
                                                     if (OperatingSystem == OperatingSystem.Linux)
                                                     {
                                                         cpu = cpu / Environment.ProcessorCount;
