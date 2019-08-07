@@ -596,8 +596,10 @@ namespace BenchmarkServer
                                                     outputDataReceived: d => stats += d,
                                                     log: true, throwOnError: false);
 
-                                                if (String.IsNullOrEmpty(stats))
+                                                if (!String.IsNullOrEmpty(stats))
                                                 {
+                                                    Log.WriteLine("Got stats: " + stats);
+
                                                     var data = stats.Trim().Split('-');
 
                                                     // Format is {value}%
