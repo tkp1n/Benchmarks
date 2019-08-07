@@ -637,6 +637,8 @@ namespace BenchmarkServer
 
                                                     var workingSet = (long)(memory * factor);
 
+                                                    Log.WriteLine("Adding counter: " + cpu);
+
                                                     job.AddServerCounter(new ServerCounter
                                                     {
                                                         Elapsed = now - startMonitorTime,
