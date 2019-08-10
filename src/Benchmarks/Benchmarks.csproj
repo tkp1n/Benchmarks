@@ -80,6 +80,7 @@
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="$(PomeloEntityFrameworkCoreMySqlVersion30)" />
     -->
 
+    <PackageReference Include="Tmds.LibC" Version="0.3.0" />
   </ItemGroup>
 
   <ItemGroup>
