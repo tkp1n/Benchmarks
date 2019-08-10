@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.IO.Pipelines;
 using System.Net;
 using System.Reflection;
 using System.Runtime;
@@ -114,20 +115,25 @@ namespace Benchmarks
 
                 if (threadPoolDispatching == false || string.Equals(kestrelTransport, "Libuv", StringComparison.OrdinalIgnoreCase))
                 {
-                    webHostBuilder.UseLibuv(options =>
-                    {
-                        if (threadCount > 0)
-                        {
-                            options.ThreadCount = threadCount;
-                        }
-                        else if (threadPoolDispatching == false)
-                        {
-                            // If thread pool dispatching is explicitly set to false
-                            // and the thread count wasn't specified then use 2 * number of logical cores
-                            options.ThreadCount = Environment.ProcessorCount * 2;
-                        }
+                    //webHostBuilder.UseLibuv(options =>
+                    //{
+                    //    if (threadCount > 0)
+                    //    {
+                    //        options.ThreadCount = threadCount;
+                    //    }
+                    //    else if (threadPoolDispatching == false)
+                    //    {
+                    //        // If thread pool dispatching is explicitly set to false
+                    //        // and the thread count wasn't specified then use 2 * number of logical cores
+                    //        options.ThreadCount = Environment.ProcessorCount * 2;
+                    //    }
 
-                        Console.WriteLine($"Using Libuv with {options.ThreadCount} threads");
+                    //    Console.WriteLine($"Using Libuv with {options.ThreadCount} threads");
+                    //});
+
+                    webHostBuilder.UseLinuxTransport(options =>
+                    {
+                        options.ApplicationSchedulingMode = PipeScheduler.Inline;
                     });
                 }
                 else if (string.Equals(kestrelTransport, "Sockets", StringComparison.OrdinalIgnoreCase))

@@ -25,7 +25,7 @@
   <ItemGroup>
     <PackageReference Include="Dapper" Version="$(DapperVersion)" />
     <PackageReference Include="MongoDB.Driver" Version="$(MongoDbVersion)" />
-    
+
     <!-- We need to be able to reference a specific Pipelines version without having to change aspnet or netcore runtimes -->
     <PackageReference Include="System.IO.Pipelines" Condition="$(SystemIOPipelinesVersion) != ''" Version="$(SystemIOPipelinesVersion)" />
   </ItemGroup>
@@ -48,7 +48,7 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(NpgsqlEntityFrameworkCorePostgreSQLVersion21)" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="$(PomeloEntityFrameworkCoreMySqlVersion21)" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="$(TargetFramework) == 'netcoreapp2.2'">
     <PackageReference Include="Microsoft.NET.Sdk.Razor" Version="2.2.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel.Transport.Libuv" Version="2.2.0" />
@@ -58,7 +58,7 @@
     <!--<PackageReference Include="Microsoft.AspNetCore.AspNetCoreModuleV2" Version="$(MicrosoftAspNetCoreAppPackageVersion)" />-->
     <!-- Temporary pinned version until the package is built again -->
     <PackageReference Include="Microsoft.AspNetCore.AspNetCoreModuleV2" Version="2.2.1" />
-    
+
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(NpgsqlEntityFrameworkCorePostgreSQLVersion22)" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="$(PomeloEntityFrameworkCoreMySqlVersion22)" />
   </ItemGroup>
@@ -82,6 +82,11 @@
 
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="RedHat.AspNetCore.Server.Kestrel.Transport.Linux">
+      <HintPath>..\..\bin\RedHat.AspNetCore.Server.Kestrel.Transport.Linux.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 
   <ItemGroup>
     <None Update="testCert.pfx">
