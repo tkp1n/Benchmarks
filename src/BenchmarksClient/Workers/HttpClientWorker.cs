@@ -24,9 +24,9 @@ namespace BenchmarksClient.Workers
         private static TimeSpan LatencyTimeout = TimeSpan.FromSeconds(2);
 
         private ClientJob _job;
-        private bool _running;
         private List<Task> _tasks = new List<Task>();
-        private int _requests = 0;
+        private int[] _requestBuckets = null;
+        private CancellationTokenSource _cts;
 
         public string JobLogText { get; set; }
 
@@ -70,6 +70,7 @@ namespace BenchmarksClient.Workers
             JobLogText = jobLogText;
 
             _httpClientHandler.MaxConnectionsPerServer = _job.Connections;
+            _requestBuckets = new int[_job.Connections];
         }
 
         public async Task StartJobAsync(ClientJob job)
@@ -82,18 +83,22 @@ namespace BenchmarksClient.Workers
             _job.State = ClientState.Running;
             _job.LastDriverCommunicationUtc = DateTime.UtcNow;
 
-            _running = true;
-
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(job.Duration));
+            _cts = new CancellationTokenSource(TimeSpan.FromSeconds(job.Duration));
             for (var i = 0; i < _job.Connections; i++)
             {
+                var index = i;
                 _tasks.Add(Task.Run(async () =>
                 {
-                    while (!cts.IsCancellationRequested)
+                    try
                     {
-                        await _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, job.ServerBenchmarkUri), cts.Token);
-                        Interlocked.Increment(ref _requests);
+                        while (!_cts.IsCancellationRequested)
+                        {
+                            await _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, job.ServerBenchmarkUri), _cts.Token);
+                            _requestBuckets[index]++;
+                        }
                     }
+                    catch (TaskCanceledException)
+                    {}
                 }));
             }
 
@@ -104,9 +109,14 @@ namespace BenchmarksClient.Workers
 
         public async Task StopJobAsync()
         {
-            _running = false;
+            _cts?.Cancel();
 
-            _job.Requests = _requests;
+            var totalRequests = 0;
+            foreach (var requests in _requestBuckets)
+            {
+                totalRequests += requests;
+            }
+            _job.Requests = totalRequests;
             _job.RequestsPerSecond = _job.Requests / (double)_job.Duration;
 
             await Task.WhenAll(_tasks);
@@ -118,7 +128,7 @@ namespace BenchmarksClient.Workers
 
         public void Dispose()
         {
-            _running = false;
+            _cts?.Cancel();
         }
 
         private static HttpRequestMessage CreateHttpMessage(ClientJob job)
@@ -133,7 +143,7 @@ namespace BenchmarksClient.Workers
             return requestMessage;
         }
 
-        private static async Task MeasureFirstRequestLatencyAsync(ClientJob job)
+        private async Task MeasureFirstRequestLatencyAsync(ClientJob job)
         {
             if (job.SkipStartupLatencies)
             {
@@ -215,8 +225,6 @@ namespace BenchmarksClient.Workers
 
         public Task DisposeAsync()
         {
-            _running = false;
-
             return StopJobAsync();
         }
     }
