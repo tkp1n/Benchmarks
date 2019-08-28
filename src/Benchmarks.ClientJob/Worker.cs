@@ -14,6 +14,7 @@ namespace Benchmarks.ClientJob
         None,
         BenchmarkDotNet,
         Bombardier,
-        BlazorIgnitor
+        BlazorIgnitor,
+        HttpClient,
     }
 }

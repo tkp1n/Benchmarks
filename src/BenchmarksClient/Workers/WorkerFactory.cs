@@ -37,6 +37,9 @@ namespace BenchmarksClient.Workers
                 case Worker.BlazorIgnitor:
                     worker = new BlazorIgnitor();
                     break;
+                case Worker.HttpClient:
+                    worker = new HttpClientWorker();
+                    break;
                 default:
                     throw new InvalidOperationException($"Unknown worker {clientJob.Client}.");
             }
