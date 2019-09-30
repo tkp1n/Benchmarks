@@ -2478,32 +2478,39 @@ namespace BenchmarkServer
                     var source = new EventPipeEventSource(binaryReader);
                     source.Dynamic.All += (eventData) =>
                     {
-                        // We only track event counters
-                        if (!eventData.EventName.Equals("EventCounters"))
+                        try
                         {
-                            return;
-                        }
-
-                        var payloadVal = (IDictionary<string, object>)(eventData.PayloadValue(0));
-                        var payloadFields = (IDictionary<string, object>)(payloadVal["Payload"]);
-
-                        var counterName = payloadFields["Name"].ToString();
-                        if (!job.Counters.TryGetValue(counterName, out var values))
-                        {
-                            lock (job.Counters)
+                            // We only track event counters
+                            if (!eventData.EventName.Equals("EventCounters"))
                             {
-                                if (!job.Counters.TryGetValue(counterName, out values))
+                                return;
+                            }
+
+                            var payloadVal = (IDictionary<string, object>)(eventData.PayloadValue(0));
+                            var payloadFields = (IDictionary<string, object>)(payloadVal["Payload"]);
+
+                            var counterName = payloadFields["Name"].ToString();
+                            if (!job.Counters.TryGetValue(counterName, out var values))
+                            {
+                                lock (job.Counters)
                                 {
-                                    job.Counters[counterName] = values = new ConcurrentQueue<string>();
+                                    if (!job.Counters.TryGetValue(counterName, out values))
+                                    {
+                                        job.Counters[counterName] = values = new ConcurrentQueue<string>();
+                                    }
                                 }
                             }
-                        }
 
-                        switch (payloadFields["CounterType"])
+                            switch (payloadFields["CounterType"])
+                            {
+                                case "Sum": values.Enqueue(payloadFields["Increment"].ToString()); break;
+                                case "Mean": values.Enqueue(payloadFields["Mean"].ToString()); break;
+                                default: Log.WriteLine($"Unknown CounterType: {payloadFields["CounterType"]}"); break;
+                            }
+                        }
+                        catch (Exception e)
                         {
-                            case "Sum": values.Enqueue(payloadFields["Increment"].ToString()); break;
-                            case "Mean": values.Enqueue(payloadFields["Mean"].ToString()); break;
-                            default: Log.WriteLine($"Unknown CounterType: {payloadFields["CounterType"]}"); break;
+                            Log.WriteLine($"[WARNING] {e.ToString()}");
                         }
                     };
 
