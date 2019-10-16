@@ -15,13 +15,13 @@ namespace BenchmarksDriver
 {
     internal static class BenchmarkDotNetUtils
     {
-        internal static async Task DownloadResultFiles(Uri serverJobUri, HttpClient httpClient, BenchmarkDotNetSerializer serializer)
+        internal static async Task DownloadResultFiles(string serverJobUri, HttpClient httpClient, BenchmarkDotNetSerializer serializer)
         {
             await DownloadFiles(serverJobUri, "report.csv", httpClient, (fileName, fileContent) => ParseCSVResults(fileName, fileContent, serializer));
             await DownloadFiles(serverJobUri, "report-github.md", httpClient, (fileName, fileContent) => WriteMarkdownResultTableToConsole(fileContent));
         }
 
-        private static async Task DownloadFiles(Uri serverJobUri, string extension, HttpClient httpClient, Action<string, string> contentHandler)
+        private static async Task DownloadFiles(string serverJobUri, string extension, HttpClient httpClient, Action<string, string> contentHandler)
         {
             var uri = $"{serverJobUri}/list?path={HttpUtility.UrlEncode("BenchmarkDotNet.Artifacts/results/*-")}{extension}";
             var response = await httpClient.GetStringAsync(uri);

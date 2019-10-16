@@ -18,7 +18,7 @@ namespace BenchmarksDriver
             }
         }
 
-        internal static async Task DownloadFileAsync(this HttpClient httpClient, string uri, Uri serverJobUri, string destinationFileName)
+        internal static async Task DownloadFileAsync(this HttpClient httpClient, string uri, string serverJobUri, string destinationFileName)
         {
             using (var downloadStream = await httpClient.GetStreamAsync(uri))
             using (var fileStream = File.Create(destinationFileName))
