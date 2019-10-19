@@ -1266,6 +1266,11 @@ namespace BenchmarksDriver
                             // Wait for all clients to stop
                             while( !jobsOnClient.All(client => client._serverJob.State == ServerState.Stopped))
                             {
+                                foreach (var jobOnClient in jobsOnClient)
+                                {
+                                    await jobOnClient.TryUpdateStateAsync();
+                                }
+
                                 await Task.Delay(1000);
                             }
                         }

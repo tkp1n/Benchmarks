@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -41,6 +42,8 @@ namespace BombardierClient
             {
                 await downloadStream.CopyToAsync(fileStream);
             }
+
+            Process.Start(bombardierFileName, "-c 256 -d 5s " + Environment.GetEnvironmentVariable("SERVER_URL"));
         }
     }
 }
