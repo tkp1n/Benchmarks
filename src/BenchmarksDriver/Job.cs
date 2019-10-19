@@ -5,7 +5,6 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Benchmarks.ServerJob;
 using BenchmarksDriver.Ignore;
@@ -25,6 +24,7 @@ namespace BenchmarksDriver
 
         // The uri of the server
         private readonly Uri _serverUri;
+        private readonly CommandOption _displayOutput;
 
         // The uri of the /jobs endpoint on the server
         private readonly Uri _serverJobsUri;
@@ -40,10 +40,11 @@ namespace BenchmarksDriver
             _httpClient = new HttpClient(_httpClientHandler);
         }
 
-        public Job(ServerJob definition, Uri serverUri)
+        public Job(ServerJob definition, Uri serverUri, CommandOption displayOutput)
         {
             _serverJob = definition;
             _serverUri = serverUri;
+            _displayOutput = displayOutput;
             _serverJobsUri = new Uri(_serverUri, "/jobs");
         }
 
@@ -55,7 +56,6 @@ namespace BenchmarksDriver
             string requiredOperatingSystem,
             bool IsConsoleApp,
             CommandOption _sourceOption,
-            CommandOption _displayOutput,
             CommandOption _outputArchiveOption,
             CommandOption _buildArchiveOption,
             CommandOption _outputFileOption,
@@ -376,6 +376,60 @@ namespace BenchmarksDriver
                     await Task.Delay(1000);
                 }
             }
+        }
+
+        public async Task StopAsync()
+        {
+            StopKeepAlive();
+
+            Log.Write($"Stopping scenario '{_serverJob.Scenario}' on benchmark server...");
+
+            var response = await _httpClient.PostAsync(_serverJobUri + "/stop", new StringContent(""));
+            Log.Verbose($"{(int)response.StatusCode} {response.StatusCode}");
+            var jobStoppedUtc = DateTime.UtcNow;
+
+            // Wait for Stop state
+            do
+            {
+                await Task.Delay(1000);
+
+                await TryUpdateStateAsync();
+
+                if (DateTime.UtcNow - jobStoppedUtc > TimeSpan.FromSeconds(30))
+                {
+                    // The job needs to be deleted
+                    Log.Write($"Server didn't stop the job in the expected time, deleting it ...");
+
+                    break;
+                }
+
+            } while (_serverJob.State != ServerState.Stopped);
+
+            if (_displayOutput.HasValue())
+            {
+                Log.DisplayOutput(_serverJob.Output);
+            }
+        }
+
+        public async Task DeleteAsync()
+        {
+            Log.Write($"Deleting scenario '{_serverJob.Scenario}' on benchmark server...");
+
+            Log.Verbose($"DELETE {_serverJobUri}...");
+            var response = await _httpClient.DeleteAsync(_serverJobUri);
+            Log.Verbose($"{(int)response.StatusCode} {response.StatusCode}");
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                Log.Write($@"Server job was not found, it must have been aborted. Possible cause:
+                            - Issue while cloning the repository (GitHub unresponsive)
+                            - Issue while restoring (MyGet/NuGet unresponsive)
+                            - Issue while building
+                            - Issue while running (Timeout)"
+                );
+            }
+
+            response.EnsureSuccessStatusCode();
         }
 
         public async Task<bool> TryUpdateStateAsync()

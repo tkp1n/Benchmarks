@@ -1127,10 +1127,10 @@ namespace BenchmarksDriver
             
             string serverJobUri = null;
             HttpResponseMessage response = null;
-            string responseContent = null;
 
             var results = new List<Statistics>();
             ClientJob[] clientJobs = null;
+            Job jobOnServer = null;
 
             IResultsSerializer serializer = null;
             //var serializer = WorkerFactory.CreateResultSerializer(_clientJob);
@@ -1154,14 +1154,13 @@ namespace BenchmarksDriver
 
                 try
                 {
-                    var jobOnServer = new Job(serverJob, serverUri);
+                    jobOnServer = new Job(serverJob, serverUri, _displayOutputOption);
 
                     // Start server
                     serverJobUri = await jobOnServer.StartAsync(
                         requiredOperatingSystem?.ToString(),
                         IsConsoleApp,
                         _serverSourceOption,
-                        _displayOutputOption,
                         _outputArchiveOption,
                         _buildArchiveOption,
                         _outputFileOption,
@@ -1230,7 +1229,7 @@ namespace BenchmarksDriver
                         // Set the URL on which the server should be reached from the clients as an environment variable
                         clientJob.EnvironmentVariables.Add("SERVER_URL", jobOnServer._serverJob.Url);
 
-                        var jobsOnClient = clientUris.Select(clientUri => new Job(clientJob, clientUri)).ToArray();
+                        var jobsOnClient = clientUris.Select(clientUri => new Job(clientJob, clientUri, _displayOutputOption)).ToArray();
                         
                         // Don't run the client job for None and BenchmarkDotNet
                         if (!IsConsoleApp)
@@ -1249,7 +1248,6 @@ namespace BenchmarksDriver
                                         requiredOperatingSystem?.ToString(),
                                         IsConsoleApp,
                                         _clientSourceOption,
-                                        _displayOutputOption,
                                         _outputArchiveOption,
                                         _buildArchiveOption,
                                         _outputFileOption,
@@ -1273,6 +1271,7 @@ namespace BenchmarksDriver
 
                                 await Task.Delay(1000);
                             }
+
                         }
                         else
                         {
@@ -1308,10 +1307,17 @@ namespace BenchmarksDriver
 
                         if (jobsOnClient.All(client => client._serverJob.State == ServerState.Stopped) && jobOnServer._serverJob.State != ServerState.Failed)
                         {
-                            foreach (var jobOnClient in jobsOnClient)
-                            {
-                                jobOnClient.StopKeepAlive();
-                            }
+
+                            // We can delete the job without calling Stop as the client jobs are already stopped (by themselves)
+                            // or they have been timed-out
+
+                            await Task.WhenAll(jobsOnClient.Select(client => client.StopAsync()));
+                            await Task.WhenAll(jobsOnClient.Select(client => client.DeleteAsync()));
+
+                            // We can delete the job without calling Stop as the client jobs are already stopped (by themselves)
+                            // or they have been timed-out
+
+                            await Task.WhenAll(jobsOnClient.Select(client => client.DeleteAsync()));
 
                             Log.Verbose($"Client Jobs completed");
 
@@ -1725,45 +1731,7 @@ namespace BenchmarksDriver
                         await sqlTask;
                     }
 
-                    Log.Write($"Stopping scenario '{scenario}' on benchmark server...");
-
-                    response = await _httpClient.PostAsync(serverJobUri + "/stop", new StringContent(""));
-                    Log.Verbose($"{(int)response.StatusCode} {response.StatusCode}");
-                    var jobStoppedUtc = DateTime.UtcNow;
-
-                    // Wait for Stop state
-                    do
-                    {
-                        await Task.Delay(1000);
-
-                        Log.Verbose($"GET {serverJobUri}...");
-                        response = await _httpClient.GetAsync(serverJobUri);
-                        responseContent = await response.Content.ReadAsStringAsync();
-
-                        Log.Verbose($"{(int)response.StatusCode} {response.StatusCode} {responseContent}");
-
-                        if (response.StatusCode == HttpStatusCode.NotFound || String.IsNullOrEmpty(responseContent))
-                        {
-                            Log.Write($"The job was forcibly stopped by the server.");
-                            return 0;
-                        }
-
-                        serverJob = JsonConvert.DeserializeObject<ServerJob>(responseContent);
-
-                        if (DateTime.UtcNow - jobStoppedUtc > TimeSpan.FromSeconds(30))
-                        {
-                            // The job needs to be deleted
-                            Log.Write($"Server didn't stop the job in the expected time, deleting it ...");
-
-                            break;
-                        }
-
-                    } while (jobOnServer._serverJob.State != ServerState.Stopped);
-
-                    if (_displayOutputOption.HasValue())
-                    {
-                        Log.DisplayOutput(jobOnServer._serverJob.Output);
-                    }
+                    await jobOnServer.StopAsync();
 
                     // Download netperf file
                     if (_enableEventPipeOption.HasValue())
@@ -1876,23 +1844,7 @@ namespace BenchmarksDriver
                             }
                         }
 
-                        Log.Write($"Deleting scenario '{scenario}' on benchmark server...");
-
-                        Log.Verbose($"DELETE {serverJobUri}...");
-                        response = await _httpClient.DeleteAsync(serverJobUri);
-                        Log.Verbose($"{(int)response.StatusCode} {response.StatusCode}");
-
-                        if (response.StatusCode == HttpStatusCode.NotFound)
-                        {
-                            Log.Write($@"Server job was not found, it must have been aborted. Possible cause:
-                            - Issue while cloning the repository (GitHub unresponsive)
-                            - Issue while restoring (MyGet/NuGet unresponsive)
-                            - Issue while building
-                            - Issue while running (Timeout)"
-                            );
-                        }
-
-                        response.EnsureSuccessStatusCode();
+                        await jobOnServer.DeleteAsync();
                     }
                 }
             }

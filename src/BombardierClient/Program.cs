@@ -41,9 +41,15 @@ namespace BombardierClient
             using (var fileStream = File.Create(bombardierFileName))
             {
                 await downloadStream.CopyToAsync(fileStream);
+                if (Environment.OSVersion.Platform == PlatformID.Unix)
+                {
+                    Process.Start("chmod", "+x " + bombardierFileName);
+                }
             }
 
-            Process.Start(bombardierFileName, "-c 256 -d 5s " + Environment.GetEnvironmentVariable("SERVER_URL"));
+            var process = Process.Start(bombardierFileName, "-c 256 -d 5s " + Environment.GetEnvironmentVariable("SERVER_URL"));
+            
+            process.WaitForExit();
         }
     }
 }
