@@ -28,7 +28,7 @@ namespace BenchmarksDriver
                 while (!downloadTask.IsCompleted)
                 {
                     // Ping server job to keep it alive while downloading the file
-                    Program.LogVerbose($"GET {serverJobUri}/touch...");
+                    Log.Verbose($"GET {serverJobUri}/touch...");
                     await httpClient.GetAsync(serverJobUri + "/touch");
 
                     await Task.Delay(1000);
