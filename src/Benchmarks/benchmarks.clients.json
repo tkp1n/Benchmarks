@@ -4,7 +4,7 @@
     "Source": {
       "Repository": "https://github.com/aspnet/benchmarks.git",
       "BranchOrCommit": "sebros/servers",
-      "Project": "src/BomcardierClient/BombardierClient.csproj"
+      "Project": "src/BombardierClient/BombardierClient.csproj"
     },
     "ReadyStateText": "Bombardier Client"
   }

@@ -16,8 +16,8 @@ namespace BenchmarksDriver
 {
     public class Job
     {
-        static HttpClient _httpClient;
-        static HttpClientHandler _httpClientHandler;
+        static readonly HttpClient _httpClient;
+        static readonly HttpClientHandler _httpClientHandler;
 
         static List<string> _temporaryFolders = new List<string>();
 
@@ -31,7 +31,7 @@ namespace BenchmarksDriver
         private string _serverJobUri;
         private bool _keepAlive;
 
-        Job()
+        static Job()
         {
             _httpClientHandler = new HttpClientHandler();
             _httpClientHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;

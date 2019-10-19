@@ -1177,7 +1177,7 @@ namespace BenchmarksDriver
                     TimeSpan latencyNoLoad = TimeSpan.Zero, latencyFirstRequest = TimeSpan.Zero;
 
                     // Reset this before each iteration
-                    _clientJob.SkipStartupLatencies = _noStartupLatencyOption.HasValue();
+                    //_clientJob.SkipStartupLatencies = _noStartupLatencyOption.HasValue();
 
 
                     // TODO: WARMUP
@@ -1205,7 +1205,7 @@ namespace BenchmarksDriver
                     //}
 
                     // Prevent the actual run from updating the startup statistics
-                    _clientJob.SkipStartupLatencies = true;
+                    //_clientJob.SkipStartupLatencies = true;
 
                     var startTime = DateTime.UtcNow;
                     var spanLoop = 0;
@@ -2243,7 +2243,7 @@ namespace BenchmarksDriver
         }
 
         // ANSI Console mode support
-        private static bool IsConsoleApp => _clientJob.Client == Worker.None || _clientJob.Client == Worker.BenchmarkDotNet;
+        private static bool IsConsoleApp => false; // _clientJob.Client == Worker.None || _clientJob.Client == Worker.BenchmarkDotNet;
 
 
         private static Func<IEnumerable<double>, double> Percentile(int percentile)
