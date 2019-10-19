@@ -30,7 +30,8 @@ namespace BombardierClient
         static async Task Main(string[] args)
         {
             Console.WriteLine("Bombardier Client");
-            Console.WriteLine(String.Join(' ', args));
+            Console.WriteLine("args: " + String.Join(' ', args));
+            Console.WriteLine("SERVER_URL:" + Environment.GetEnvironmentVariable("SERVER_URL"));
 
             var bombardierUrl = _bombardierUrls[Environment.OSVersion.Platform];
             var bombardierFileName = Path.GetFileName(bombardierUrl);

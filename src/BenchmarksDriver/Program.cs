@@ -1227,8 +1227,10 @@ namespace BenchmarksDriver
                             }
                         }
 
-                        var jobsOnClient = clientUris.Select(clientUri => new Job(clientJob, clientUri)).ToArray();
+                        // Set the URL on which the server should be reached from the clients as an environment variable
+                        clientJob.EnvironmentVariables.Add("SERVER_URL", jobOnServer._serverJob.Url);
 
+                        var jobsOnClient = clientUris.Select(clientUri => new Job(clientJob, clientUri)).ToArray();
                         
                         // Don't run the client job for None and BenchmarkDotNet
                         if (!IsConsoleApp)
@@ -1237,22 +1239,35 @@ namespace BenchmarksDriver
                             //await Task.WhenAll(tasks);
                             //clientJobs = tasks.Select(x => x.Result).ToArray();
 
+
+                            // Wait for all clients to start
                             await Task.WhenAll(
                                 jobsOnClient.Select(jobOnClient =>
                                 {
-                                // Start server
-                                return jobOnClient.StartAsync(
-                                requiredOperatingSystem?.ToString(),
-                                IsConsoleApp,
-                                _clientSourceOption,
-                                _displayOutputOption,
-                                _outputArchiveOption,
-                                _buildArchiveOption,
-                                _outputFileOption,
-                                _buildFileOption
-                                );
+                                    // Start server
+                                    return jobOnClient.StartAsync(
+                                        requiredOperatingSystem?.ToString(),
+                                        IsConsoleApp,
+                                        _clientSourceOption,
+                                        _displayOutputOption,
+                                        _outputArchiveOption,
+                                        _buildArchiveOption,
+                                        _outputFileOption,
+                                        _buildFileOption
+                                    );
                                 })
                             );
+
+                            foreach (var jobOnClient in jobsOnClient)
+                            {
+                                jobOnClient.StartKeepAlive();
+                            }
+
+                            // Wait for all clients to stop
+                            while( !jobsOnClient.All(client => client._serverJob.State == ServerState.Stopped))
+                            {
+                                await Task.Delay(1000);
+                            }
                         }
                         else
                         {
@@ -1288,6 +1303,11 @@ namespace BenchmarksDriver
 
                         if (jobsOnClient.All(client => client._serverJob.State == ServerState.Stopped) && jobOnServer._serverJob.State != ServerState.Failed)
                         {
+                            foreach (var jobOnClient in jobsOnClient)
+                            {
+                                jobOnClient.StopKeepAlive();
+                            }
+
                             Log.Verbose($"Client Jobs completed");
 
                             if (span == TimeSpan.Zero && i == iterations && !String.IsNullOrEmpty(shutdownEndpoint))
