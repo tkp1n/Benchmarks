@@ -1246,7 +1246,7 @@ namespace BenchmarksDriver
                                     // Start server
                                     return jobOnClient.StartAsync(
                                         requiredOperatingSystem?.ToString(),
-                                        IsConsoleApp,
+                                        true, // assume console app for now as we don't have a way to set it for the client
                                         _clientSourceOption,
                                         _outputArchiveOption,
                                         _buildArchiveOption,

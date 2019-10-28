@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BombardierClient
+namespace HttpClientClient
 {
     class Program
     {
