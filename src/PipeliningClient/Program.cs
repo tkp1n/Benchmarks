@@ -29,6 +29,9 @@ namespace PipeliningClient
         private static int _counter;
         public static void IncrementCounter() => Interlocked.Increment(ref _counter);
 
+        private static int _error;
+        public static void IncrementError() => Interlocked.Increment(ref _error);
+
         private static int _running;
 
         public static bool IsRunning => _running == 1;
@@ -57,6 +60,7 @@ namespace PipeliningClient
                         await Task.Delay(TimeSpan.FromSeconds(WarmupTimeSeconds));
 
                         Interlocked.Exchange(ref _counter, 0);
+                        Interlocked.Exchange(ref _error, 0);
 
                         startTime = DateTime.UtcNow;
                         var lastDisplay = startTime;
@@ -117,15 +121,19 @@ namespace PipeliningClient
             var stdDev = CalculateStdDev(results);
 
             Console.SetCursorPosition(0, Console.CursorTop);
-            Console.WriteLine($"{threadCount:D2} Threads, tps: {totalTps:F2}, stddev(w/o best+worst): {stdDev:F2}");
+            Console.WriteLine($"{threadCount:D2} Threads, tps: {totalTps:F2}, Errors: {_error:D2}, stddev(w/o best+worst): {stdDev:F2}");
         }
 
         public static async Task DoWorkAsync()
         {
             var serverUrl = new Uri(Environment.GetEnvironmentVariable("SERVER_URL"));
 
+            // TODO: parse server url
+            string hostName = "10.0.0.102";
+            int hostPort = 5000;
+
             var request = $"GET {serverUrl} HTTP/1.1\r\n" +
-                "Host: 127.0.0.1\r\n" +
+                $"Host: {hostName}:{hostPort}\r\n" +
                 "Content-Length: 0\r\n" +
                 "\r\n";
 
@@ -133,23 +141,44 @@ namespace PipeliningClient
 
             // http://10.0.0.102:5000/plaintext
 
-            // TODO: parse server url
-            string hostName = "10.0.0.102";
-            int hostPort = 5000;
-            
+
+
             IPAddress host = IPAddress.Parse(hostName);
             IPEndPoint hostep = new IPEndPoint(host, hostPort);
             Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
             await sock.ConnectAsync(hostep);
 
-            var buffer = new byte[4096].AsMemory();
+            var buffer = new byte[4096];
+            var result = new char[buffer.Length * 2];
+            int bytesReceived;
 
             while (Program.IsRunning)
             {
                 var response = await sock.SendAsync(requestBytes, SocketFlags.None);
-                var bytes = await sock.ReceiveAsync(buffer, SocketFlags.None);
 
+                var first = true;
+
+                do
+                {
+                    bytesReceived = await sock.ReceiveAsync(buffer, SocketFlags.None);
+
+                    if (first)
+                    {
+                        var expectedResponse = "HTTP/1.1 200 OK";
+                        for (var i = 0; i < expectedResponse.Length; i++)
+                        {
+                            if (buffer[i] != expectedResponse[i])
+                            {
+                                throw new Exception("Bad Response");
+                            }
+                        }
+                    }
+
+                    //Encoding.UTF8.GetDecoder().Convert(buffer, 0, bytesReceived, result, 0, result.Length, true, out var bytesUsed, out var charsUsed, out var completed);
+                    //Console.WriteLine(result);
+
+                } while (bytesReceived == buffer.Length);
                 Program.IncrementCounter();
             }
 
