@@ -1305,18 +1305,16 @@ namespace BenchmarksDriver
                             }
                         }
 
-                        if (jobsOnClient.All(client => client._serverJob.State == ServerState.Stopped) && jobOnServer._serverJob.State != ServerState.Failed)
+                        if (jobsOnClient.Any(client => client._serverJob.State == ServerState.Failed))
                         {
-
-                            // We can delete the job without calling Stop as the client jobs are already stopped (by themselves)
-                            // or they have been timed-out
-
+                            // Stop all client jobs
                             await Task.WhenAll(jobsOnClient.Select(client => client.StopAsync()));
                             await Task.WhenAll(jobsOnClient.Select(client => client.DeleteAsync()));
-
-                            // We can delete the job without calling Stop as the client jobs are already stopped (by themselves)
-                            // or they have been timed-out
-
+                        }
+                        else if (jobsOnClient.All(client => client._serverJob.State == ServerState.Stopped) && jobOnServer._serverJob.State != ServerState.Failed)
+                        {
+                            // Stop all client jobs
+                            await Task.WhenAll(jobsOnClient.Select(client => client.StopAsync()));
                             await Task.WhenAll(jobsOnClient.Select(client => client.DeleteAsync()));
 
                             Log.Verbose($"Client Jobs completed");
