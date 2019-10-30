@@ -41,9 +41,9 @@ namespace BenchmarksClient.Workers
                         await ComputeStats(clientStats, () => client.ClickAsync("confirm"), cancellationToken);
 
                         var newCount = ReadIntAttribute(pizzaOrders, "pizzaCount");
-                        if (newCount != count + 1)
+                        if (newCount == count)
                         {
-                            throw new InvalidOperationException($"Expected count to be {(count + 1)} but was {newCount}.");
+                            throw new InvalidOperationException($"Expected count to have changed, but it remains at {count}.");
                         }
                         count = newCount;
                     }

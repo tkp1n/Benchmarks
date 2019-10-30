@@ -81,7 +81,7 @@ namespace BenchmarksClient.Workers
             var tasks = new List<Task>(_clients.Count);
             foreach (var client in _clients)
             {
-                tasks.Add(client.ConnectAsync(new Uri(_job.ServerBenchmarkUri)));
+                tasks.Add(client.ConnectAsync(new Uri("http://51.143.101.14:5000/")));
             }
 
             await Task.WhenAll(tasks);
