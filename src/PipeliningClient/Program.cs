@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,29 +9,24 @@ namespace PipeliningClient
 {
     class Program
     {
-        static HttpClientHandler _httpClientHandler = new HttpClientHandler();
-        static HttpClient _httpClient;
-
-        static Program()
-        {
-            _httpClientHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-            _httpClientHandler.AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate;
-            _httpClient = new HttpClient(_httpClientHandler);
-        }
-
-        private const int DefaultThreadCount = 32;
-        private const int DefaultExecutionTimeSeconds = 10;
-        private const int WarmupTimeSeconds = 3;
+        private const int DefaultThreadCount = 256;
+        private const int DefaultExecutionTimeSeconds = 15;
+        private const int WarmupTimeSeconds = 10;
 
         private static int _counter;
         public static void IncrementCounter() => Interlocked.Increment(ref _counter);
 
-        private static int _error;
-        public static void IncrementError() => Interlocked.Increment(ref _error);
+        private static int _errors;
+        public static void IncrementError() => Interlocked.Increment(ref _errors);
+
+        private static int _socketErrors;
+        public static void IncrementSocketError() => Interlocked.Increment(ref _socketErrors);
 
         private static int _running;
-
         public static bool IsRunning => _running == 1;
+
+        public static string ServerUrl { get; set; }
+        public static int PipelineDepth { get; set; } = 8;
 
         static async Task Main(string[] args)
         {
@@ -42,25 +34,31 @@ namespace PipeliningClient
             Console.WriteLine("args: " + String.Join(' ', args));
             Console.WriteLine("SERVER_URL:" + Environment.GetEnvironmentVariable("SERVER_URL"));
 
+            ServerUrl = Environment.GetEnvironmentVariable("SERVER_URL");
+
             DateTime startTime = default, stopTime = default;
 
             var threadCount = DefaultThreadCount;
             var time = DefaultExecutionTimeSeconds;
 
-            var totalTransactions = 0;
+            var totalRequests = 0;
             var results = new List<double>();
 
             IEnumerable<Task> CreateTasks()
             {
+                // Statistics thread
                 yield return Task.Run(
                     async () =>
                     {
-                        Console.Write($"Warming up for {WarmupTimeSeconds}s...");
+                        Console.WriteLine($"Warming up for {WarmupTimeSeconds}s...");
 
                         await Task.Delay(TimeSpan.FromSeconds(WarmupTimeSeconds));
 
+                        Console.WriteLine($"Running for {time}s...");
+
                         Interlocked.Exchange(ref _counter, 0);
-                        Interlocked.Exchange(ref _error, 0);
+                        Interlocked.Exchange(ref _errors, 0);
+                        Interlocked.Exchange(ref _socketErrors, 0);
 
                         startTime = DateTime.UtcNow;
                         var lastDisplay = startTime;
@@ -79,10 +77,11 @@ namespace PipeliningClient
                             //Console.SetCursorPosition(0, Console.CursorTop);
 
                             lastDisplay = now;
-                            totalTransactions += Interlocked.Exchange(ref _counter, 0);
+                            totalRequests += Interlocked.Exchange(ref _counter, 0);
                         }
                     });
 
+                // Shutdown everything
                 yield return Task.Run(
                    async () =>
                    {
@@ -94,7 +93,7 @@ namespace PipeliningClient
                    });
 
                 foreach (var task in Enumerable.Range(0, threadCount)
-                    .Select(_ => Task.Factory.StartNew(DoWorkAsync, TaskCreationOptions.LongRunning).Unwrap()))
+                    .Select(_ => Task.Run(DoWorkAsync)))
                 {
                     yield return task;
                 }
@@ -104,7 +103,7 @@ namespace PipeliningClient
 
             await Task.WhenAll(CreateTasks());
 
-            var totalTps = (int)(totalTransactions / (stopTime - startTime).TotalSeconds);
+            var totalTps = (int)(totalRequests / (stopTime - startTime).TotalSeconds);
 
             results.Sort();
             results.RemoveAt(0);
@@ -121,68 +120,76 @@ namespace PipeliningClient
             var stdDev = CalculateStdDev(results);
 
             Console.SetCursorPosition(0, Console.CursorTop);
-            Console.WriteLine($"{threadCount:D2} Threads, tps: {totalTps:F2}, Errors: {_error:D2}, stddev(w/o best+worst): {stdDev:F2}");
+            Console.WriteLine($"{threadCount} Threads");
+            Console.WriteLine($"Average RPS: {totalTps:N0}");
+            Console.WriteLine($"Max RPS: {results.Max():N0}");
+            Console.WriteLine($"20x: {totalRequests:N0}");
+            Console.WriteLine($"Bad Responses: {_errors:N0}");
+            Console.WriteLine($"Socket Errors: {_socketErrors:N0}");
+            Console.WriteLine($"StdDev: {stdDev:N0}");
         }
 
         public static async Task DoWorkAsync()
         {
-            var serverUrl = new Uri(Environment.GetEnvironmentVariable("SERVER_URL"));
+            var responses = new HttpResponse[PipelineDepth];
 
-            // TODO: parse server url
-            string hostName = "10.0.0.102";
-            int hostPort = 5000;
-
-            var request = $"GET {serverUrl} HTTP/1.1\r\n" +
-                $"Host: {hostName}:{hostPort}\r\n" +
-                "Content-Length: 0\r\n" +
-                "\r\n";
-
-            var requestBytes = Encoding.UTF8.GetBytes(request).AsMemory();
-
-            // http://10.0.0.102:5000/plaintext
-
-
-
-            IPAddress host = IPAddress.Parse(hostName);
-            IPEndPoint hostep = new IPEndPoint(host, hostPort);
-            Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-            await sock.ConnectAsync(hostep);
-
-            var buffer = new byte[4096];
-            var result = new char[buffer.Length * 2];
-            int bytesReceived;
-
-            while (Program.IsRunning)
+            while (IsRunning)
             {
-                var response = await sock.SendAsync(requestBytes, SocketFlags.None);
-
-                var first = true;
-
-                do
+                // Creating a new connection every time it is necessary
+                using (var connection = new HttpConnection(ServerUrl, PipelineDepth))
                 {
-                    bytesReceived = await sock.ReceiveAsync(buffer, SocketFlags.None);
+                    await connection.ConnectAsync();
 
-                    if (first)
+                    try
                     {
-                        var expectedResponse = "HTTP/1.1 200 OK";
-                        for (var i = 0; i < expectedResponse.Length; i++)
+                        var sw = new Stopwatch();
+
+                        while (IsRunning)
                         {
-                            if (buffer[i] != expectedResponse[i])
+                            sw.Start();
+
+                            var i = 0;
+                            await foreach (var response in connection.SendRequestsAsync())
                             {
-                                throw new Exception("Bad Response");
+                                responses[i++] = response;
+                            }
+
+                            sw.Stop();
+                            // Add the latency divided by the pipeline depth
+
+                            var doBreak = false;
+                            foreach (var response in responses)
+                            {
+                                if (response.State == HttpResponseState.Completed)
+                                {
+                                    if (response.StatusCode >= 200 && response.StatusCode < 300)
+                                    {
+                                        IncrementCounter();
+                                    }
+                                    else
+                                    {
+                                        IncrementError();
+                                    }
+                                }
+                                else
+                                {
+                                    IncrementSocketError();
+                                    doBreak = true;
+                                }
+                            }
+
+                            if (doBreak)
+                            {
+                                break;
                             }
                         }
                     }
-
-                    //Encoding.UTF8.GetDecoder().Convert(buffer, 0, bytesReceived, result, 0, result.Length, true, out var bytesUsed, out var charsUsed, out var completed);
-                    //Console.WriteLine(result);
-
-                } while (bytesReceived == buffer.Length);
-                Program.IncrementCounter();
+                    catch
+                    {
+                        IncrementSocketError();
+                    }
+                }
             }
-
-            sock.Close();
         }
     }
 }
