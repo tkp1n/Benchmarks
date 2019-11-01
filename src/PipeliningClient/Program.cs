@@ -4,15 +4,12 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using McMaster.Extensions.CommandLineUtils;
 
 namespace PipeliningClient
 {
     class Program
     {
-        private const int DefaultThreadCount = 256;
-        private const int DefaultExecutionTimeSeconds = 15;
-        private const int WarmupTimeSeconds = 10;
-
         private static int _counter;
         public static void IncrementCounter() => Interlocked.Increment(ref _counter);
 
@@ -26,20 +23,53 @@ namespace PipeliningClient
         public static bool IsRunning => _running == 1;
 
         public static string ServerUrl { get; set; }
-        public static int PipelineDepth { get; set; } = 8;
+        public static int PipelineDepth { get; set; }
+        public static int WarmupTimeSeconds { get; set; }
+        public static int ExecutionTimeSeconds { get; set; }
+        public static int Connections { get; set; }
+        public static List<string> Headers { get; set; }
 
         static async Task Main(string[] args)
         {
-            Console.WriteLine("HttpClient Client");
-            Console.WriteLine("args: " + String.Join(' ', args));
-            Console.WriteLine("SERVER_URL:" + Environment.GetEnvironmentVariable("SERVER_URL"));
+            var app = new CommandLineApplication();
 
-            ServerUrl = Environment.GetEnvironmentVariable("SERVER_URL");
+            app.HelpOption("-h|--help");
+            var optionUrl = app.Option("-u|--url <URL>", "The server url to request", CommandOptionType.SingleValue);
+            var optionConnections = app.Option<int>("-c|--connections <N>", "Total number of HTTP connections to keep open", CommandOptionType.SingleValue);
+            var optionWarmup = app.Option<int>("-w|--warmup <N>", "Duration of the warmup in seconds", CommandOptionType.SingleValue);
+            var optionDuration = app.Option<int>("-d|--duration <N>", "Duration of the test in seconds", CommandOptionType.SingleValue);
+            var optionHeaders = app.Option("-H|--header <HEADER>", "HTTP header to add to request, e.g. \"User-Agent: edge\"", CommandOptionType.MultipleValue);
+            var optionPipeline = app.Option<int>("-p|--pipeline <N>", "The pipelining depth", CommandOptionType.SingleValue);
+
+            app.OnExecuteAsync(cancellationToken =>
+            {
+                PipelineDepth = optionPipeline.HasValue()
+                    ? int.Parse(optionPipeline.Value())
+                    : 1;
+
+                ServerUrl = optionUrl.Value();
+
+                WarmupTimeSeconds = optionWarmup.HasValue()
+                    ? int.Parse(optionWarmup.Value())
+                    : 0;
+
+                ExecutionTimeSeconds = int.Parse(optionDuration.Value());
+
+                Connections = int.Parse(optionConnections.Value());
+
+                Headers = new List<string>(optionHeaders.Values);
+
+                return RunAsync();
+            });
+
+            await app.ExecuteAsync(args);            
+        }
+
+        public static async Task RunAsync()
+        {
+            Console.WriteLine($"Running {ExecutionTimeSeconds}s test @ {ServerUrl}");
 
             DateTime startTime = default, stopTime = default;
-
-            var threadCount = DefaultThreadCount;
-            var time = DefaultExecutionTimeSeconds;
 
             var totalRequests = 0;
             var results = new List<double>();
@@ -50,11 +80,13 @@ namespace PipeliningClient
                 yield return Task.Run(
                     async () =>
                     {
-                        Console.WriteLine($"Warming up for {WarmupTimeSeconds}s...");
+                        if (WarmupTimeSeconds > 0)
+                        {
+                            Console.WriteLine($"Warming up for {WarmupTimeSeconds}s...");
+                            await Task.Delay(TimeSpan.FromSeconds(WarmupTimeSeconds));
+                        }
 
-                        await Task.Delay(TimeSpan.FromSeconds(WarmupTimeSeconds));
-
-                        Console.WriteLine($"Running for {time}s...");
+                        Console.WriteLine($"Running for {ExecutionTimeSeconds}s...");
 
                         Interlocked.Exchange(ref _counter, 0);
                         Interlocked.Exchange(ref _errors, 0);
@@ -69,7 +101,7 @@ namespace PipeliningClient
 
                             var now = DateTime.UtcNow;
                             var tps = (int)(_counter / (now - lastDisplay).TotalSeconds);
-                            var remaining = (int)(time - (now - startTime).TotalSeconds);
+                            var remaining = (int)(ExecutionTimeSeconds - (now - startTime).TotalSeconds);
 
                             results.Add(tps);
 
@@ -85,14 +117,14 @@ namespace PipeliningClient
                 yield return Task.Run(
                    async () =>
                    {
-                       await Task.Delay(TimeSpan.FromSeconds(WarmupTimeSeconds + time));
+                       await Task.Delay(TimeSpan.FromSeconds(WarmupTimeSeconds + ExecutionTimeSeconds));
 
                        Interlocked.Exchange(ref _running, 0);
 
                        stopTime = DateTime.UtcNow;
                    });
 
-                foreach (var task in Enumerable.Range(0, threadCount)
+                foreach (var task in Enumerable.Range(0, Connections)
                     .Select(_ => Task.Run(DoWorkAsync)))
                 {
                     yield return task;
@@ -120,7 +152,7 @@ namespace PipeliningClient
             var stdDev = CalculateStdDev(results);
 
             Console.SetCursorPosition(0, Console.CursorTop);
-            Console.WriteLine($"{threadCount} Threads");
+            Console.WriteLine($"{Connections} connections");
             Console.WriteLine($"Average RPS: {totalTps:N0}");
             Console.WriteLine($"Max RPS: {results.Max():N0}");
             Console.WriteLine($"20x: {totalRequests:N0}");
@@ -136,7 +168,7 @@ namespace PipeliningClient
             while (IsRunning)
             {
                 // Creating a new connection every time it is necessary
-                using (var connection = new HttpConnection(ServerUrl, PipelineDepth))
+                using (var connection = new HttpConnection(ServerUrl, PipelineDepth, Headers))
                 {
                     await connection.ConnectAsync();
 

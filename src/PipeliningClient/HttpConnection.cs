@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Buffers.Text;
 using System.Collections.Generic;
 using System.IO.Pipelines;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -24,15 +25,21 @@ namespace PipeliningClient
         private static ReadOnlySpan<byte> ContentLength => new byte[] { (byte)'C', (byte)'o', (byte)'n', (byte)'t', (byte)'e', (byte)'n', (byte)'t', (byte)'-', (byte)'L', (byte)'e', (byte)'n', (byte)'g', (byte)'t', (byte)'h' };
         private static ReadOnlySpan<byte> NewLine => new byte[] { (byte)'\r', (byte)'\n' };
 
-        public HttpConnection(string url, int pipelineDepth = 1)
+        public HttpConnection(string url, int pipelineDepth, IEnumerable<string> headers)
         {
             _url = url;
             _pipelineDepth = pipelineDepth;
             UriHelper.FromAbsolute(_url, out var scheme, out var host, out var path, out var query, out var fragment);
 
-            var request = $"GET {path.Value}/{query.Value} HTTP/1.1\r\n" +
-                $"Host: {host.Value}\r\n" +
-                "Content-Length: 0\r\n" +
+            var request = $"GET {path.Value}/{query.Value} HTTP/1.1\r\n";
+
+            if (!headers.Any(h => h.StartsWith("Host:")))
+            {
+                request += $"Host: {host.Value}\r\n";
+            }
+
+            request += "Content-Length: 0\r\n" +
+                String.Join("\r\n", headers) +
                 "\r\n";
 
             _requestBytes = Encoding.UTF8.GetBytes(request).AsMemory();

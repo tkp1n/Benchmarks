@@ -182,6 +182,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpClientClient", "src\Htt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PipeliningClient", "src\PipeliningClient\PipeliningClient.csproj", "{707877E6-B4FB-4AA3-960A-51A39B3F15DE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NullClient", "src\NullClient\NullClient.csproj", "{06D85C8B-C644-4DCF-B54C-EF7CA3B85716}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -350,6 +352,14 @@ Global
 		{707877E6-B4FB-4AA3-960A-51A39B3F15DE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{707877E6-B4FB-4AA3-960A-51A39B3F15DE}.Release|x86.ActiveCfg = Release|Any CPU
 		{707877E6-B4FB-4AA3-960A-51A39B3F15DE}.Release|x86.Build.0 = Release|Any CPU
+		{06D85C8B-C644-4DCF-B54C-EF7CA3B85716}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06D85C8B-C644-4DCF-B54C-EF7CA3B85716}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06D85C8B-C644-4DCF-B54C-EF7CA3B85716}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{06D85C8B-C644-4DCF-B54C-EF7CA3B85716}.Debug|x86.Build.0 = Debug|Any CPU
+		{06D85C8B-C644-4DCF-B54C-EF7CA3B85716}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06D85C8B-C644-4DCF-B54C-EF7CA3B85716}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06D85C8B-C644-4DCF-B54C-EF7CA3B85716}.Release|x86.ActiveCfg = Release|Any CPU
+		{06D85C8B-C644-4DCF-B54C-EF7CA3B85716}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -377,6 +387,7 @@ Global
 		{BB0A5BB4-0C08-4F68-B499-B6E5700E6672} = {38872C7A-DA86-4CBF-B0C1-33A78886D41A}
 		{5E565AB7-FA31-4269-B934-CEB7EC75AB62} = {38872C7A-DA86-4CBF-B0C1-33A78886D41A}
 		{707877E6-B4FB-4AA3-960A-51A39B3F15DE} = {38872C7A-DA86-4CBF-B0C1-33A78886D41A}
+		{06D85C8B-C644-4DCF-B54C-EF7CA3B85716} = {38872C7A-DA86-4CBF-B0C1-33A78886D41A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C48AD7EE-82B1-4307-A869-3FC14AC9B21F}

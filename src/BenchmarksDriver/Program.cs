@@ -202,10 +202,14 @@ namespace BenchmarksDriver
                 "ASP.NET Core packages version (Current, Latest, or custom value). Current is the latest public version (2.0.*), Latest is the currently developed one. Default is Latest (2.2-*).", CommandOptionType.SingleValue);
             var runtimeVersionOption = app.Option("-dotnet|--runtimeVersion",
                 ".NET Core Runtime version (Current, Latest, Edge or custom value). Current is the latest public version, Latest is the one enlisted, Edge is the latest available. Default is Latest (2.2.0-*).", CommandOptionType.SingleValue);
-            var argOption = app.Option("-a|--arg",
-                "Argument to pass to the application. (e.g., --arg \"--raw=true\" --arg \"single_value\")", CommandOptionType.MultipleValue);
-            var noArgumentsOptions = app.Option("--no-arguments",
+            var serverArgumentsOption = app.Option("--server-args",
+                "Argument to pass to the server application. (e.g., --server-args \"--raw=true\" --server-args \"single_value\")", CommandOptionType.MultipleValue);
+            var clientArgumentsOption = app.Option("--client-args",
+                "Argument to pass to the client application. (e.g., --client-args \"--raw=true\" --client-args \"single_value\")", CommandOptionType.MultipleValue);
+            var serverNoArgumentsOptions = app.Option("--server-no-arguments",
                 "Removes any predefined arguments from the server application command line.", CommandOptionType.NoValue);
+            var clientNoArgumentsOptions = app.Option("--client-no-arguments",
+                "Removes any predefined arguments from the client application command line.", CommandOptionType.NoValue);
             var portOption = app.Option("--port",
                 "The port used to request the benchmarked application. Default is 5000.", CommandOptionType.SingleValue);
             var readyTextOption = app.Option("--ready-text",
@@ -622,15 +626,15 @@ namespace BenchmarksDriver
                 {
                     serverJob.KestrelThreadCount = int.Parse(kestrelThreadCountOption.Value());
                 }
-                if (noArgumentsOptions.HasValue())
+                if (serverNoArgumentsOptions.HasValue())
                 {
                     serverJob.NoArguments = true;
                 }
-                if (argOption.HasValue())
+                if (serverArgumentsOption.HasValue())
                 {
                     serverJob.Arguments = serverJob.Arguments ?? "";
 
-                    foreach (var arg in argOption.Values)
+                    foreach (var arg in serverArgumentsOption.Values)
                     {
                         var equalSignIndex = arg.IndexOf('=');
 
@@ -873,6 +877,31 @@ namespace BenchmarksDriver
                 }
 
                 // Building ClientJob
+
+                if (clientArgumentsOption.HasValue())
+                {
+                    clientJob.Arguments = clientJob.Arguments ?? "";
+
+                    foreach (var arg in clientArgumentsOption.Values)
+                    {
+                        var equalSignIndex = arg.IndexOf('=');
+
+                        if (equalSignIndex == -1)
+                        {
+                            clientJob.Arguments += " " + arg;
+                        }
+                        else
+                        {
+                            clientJob.Arguments += $" {arg.Substring(0, equalSignIndex)} {arg.Substring(equalSignIndex + 1)}";
+                        }
+                    }
+                }
+
+            if (clientNoArgumentsOptions.HasValue())
+                {
+                    clientJob.NoArguments = true;
+                }
+
 
                 //var mergedClientJob = new JObject(defaultJob);
                 //mergedClientJob.Merge(job);
