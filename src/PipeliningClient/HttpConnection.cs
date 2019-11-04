@@ -6,6 +6,7 @@ using System.IO.Pipelines;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -167,11 +168,20 @@ namespace PipeliningClient
             switch (httpResponse.State)
             {
                 case HttpResponseState.StartLine:
-
-                    if (!sequenceReader.TryReadTo(out ReadOnlySpan<byte> version, (byte)' '))
+                    if (!sequenceReader.TryReadTo(out ReadOnlySpan<byte> startLine, NewLine))
                     {
                         return;
                     }
+
+                    var space = startLine.IndexOf((byte)' ');
+
+                    if (space == -1)
+                    {
+                        httpResponse.State = HttpResponseState.Error;
+                        return;
+                    }
+
+                    var version = startLine.Slice(0, space);
 
                     if (!version.SequenceEqual(Http11))
                     {
@@ -179,34 +189,33 @@ namespace PipeliningClient
                         return;
                     }
 
-                    if (!sequenceReader.TryReadTo(out ReadOnlySpan<byte> statusCodeText, (byte)' '))
-                    {
-                        return;
-                    }
-                    else if (!Utf8Parser.TryParse(statusCodeText, out int statusCode, out _))
+                    startLine = startLine.Slice(space + 1);
+
+                    space = startLine.IndexOf((byte)' ');
+
+                    if (space == -1 || !Utf8Parser.TryParse(startLine.Slice(0, space), out int statusCode, out _))
                     {
                         httpResponse.State = HttpResponseState.Error;
+                        return;
                     }
                     else
                     {
                         httpResponse.StatusCode = statusCode;
                     }
 
-                    if (!sequenceReader.TryReadTo(out ReadOnlySequence<byte> statusText, NewLine))
-                    {
-                        return;
-                    }
+                    // reason phrase
+                    // startLine.Slice(space + 1)
 
                     httpResponse.State = HttpResponseState.Headers;
 
                     examined = sequenceReader.Position;
 
-                    break;
+                    goto case HttpResponseState.Headers;
 
                 case HttpResponseState.Headers:
 
                     // Read evey headers
-                    while (sequenceReader.TryReadTo(out var headerLine, NewLine))
+                    while (sequenceReader.TryReadTo(out ReadOnlySpan<byte> headerLine, NewLine))
                     {
                         // Is that the end of the headers?
                         if (headerLine.Length == 0)
@@ -214,11 +223,17 @@ namespace PipeliningClient
                             examined = sequenceReader.Position;
 
                             // End of headers
-                            httpResponse.State = httpResponse.HasContentLengthHeader
-                                ? httpResponse.State = HttpResponseState.Body
-                                : httpResponse.State = HttpResponseState.ChunkedBody;
 
-                            break;
+                            if (httpResponse.HasContentLengthHeader)
+                            {
+                                httpResponse.State = HttpResponseState.Body;
+
+                                goto case HttpResponseState.Body;
+                            }
+
+                            httpResponse.State = HttpResponseState.ChunkedBody;
+
+                            goto case HttpResponseState.ChunkedBody;
                         }
 
                         // Parse the header
@@ -267,9 +282,8 @@ namespace PipeliningClient
                                 // We need to read more data
                                 break;
                             }
-                            else if (!sequenceReader.TryReadTo(out _, NewLine))
+                            else if (!TryParseCrlf(ref sequenceReader, httpResponse))
                             {
-                                httpResponse.State = HttpResponseState.Error;
                                 break;
                             }
 
@@ -277,7 +291,7 @@ namespace PipeliningClient
                         }
                         else
                         {
-                            if (!sequenceReader.TryReadTo(out ReadOnlySequence<byte> chunkSizeText, NewLine))
+                            if (!sequenceReader.TryReadTo(out ReadOnlySpan<byte> chunkSizeText, NewLine))
                             {
                                 // Don't have a full chunk yet
                                 break;
@@ -296,9 +310,8 @@ namespace PipeliningClient
                             if (chunkSize == 0)
                             {
                                 // The Body should end with two NewLine
-                                if (!sequenceReader.TryReadTo(out _, NewLine))
+                                if (!TryParseCrlf(ref sequenceReader, httpResponse))
                                 {
-                                    httpResponse.State = HttpResponseState.Error;
                                     break;
                                 }
 
@@ -317,61 +330,65 @@ namespace PipeliningClient
             buffer = buffer.Slice(sequenceReader.Position);
         }
 
-        private static void ParseHeader(in ReadOnlySequence<byte> headerLine, HttpResponse httpResponse)
+        private static bool TryParseCrlf(ref SequenceReader<byte> sequenceReader, HttpResponse httpResponse)
         {
-            var headerReader = new SequenceReader<byte>(headerLine);
+            // Need at least 2 characters in the buffer to make a call
+            if (sequenceReader.Remaining < 2)
+            {
+                return false;
+            }
 
-            if (!headerReader.TryReadTo(out ReadOnlySpan<byte> header, (byte)':'))
+            // We expect a crlf
+            if (sequenceReader.IsNext(NewLine, advancePast: true))
+            {
+                return true;
+            }
+
+            // Didn't see that, broken server
+            httpResponse.State = HttpResponseState.Error;
+            return false;
+        }
+
+        private static void ParseHeader(in ReadOnlySpan<byte> headerLine, HttpResponse httpResponse)
+        {
+            var headerSpan = headerLine;
+            var colon = headerSpan.IndexOf((byte)':');
+
+            if (colon == -1)
             {
                 httpResponse.State = HttpResponseState.Error;
                 return;
             }
 
-            // If this is the Content-Length header, read its value
-            if (header.SequenceEqual(ContentLength))
+            if (!headerSpan.Slice(0, colon).SequenceEqual(ContentLength))
             {
-                httpResponse.HasContentLengthHeader = true;
+                return;
+            }
 
-                var remaining = headerReader.Sequence.Slice(headerReader.Position);
+            httpResponse.HasContentLengthHeader = true;
 
-                if (remaining.Length > 128)
-                {
-                    // Giant number?
-                    httpResponse.State = HttpResponseState.Error;
-                    return;
-                }
 
-                if (!TryParseContentLength(remaining, out int contentLength))
-                {
-                    httpResponse.State = HttpResponseState.Error;
-                    return;
-                }
+            var value = headerSpan.Slice(colon + 1).Trim((byte)' ');
 
+
+
+
+
+            if (Utf8Parser.TryParse(value, out long contentLength, out _))
+            {
                 httpResponse.ContentLength = contentLength;
                 httpResponse.ContentLengthRemaining = contentLength;
             }
-        }
-
-        private static bool TryParseChunkPrefix(in ReadOnlySequence<byte> chunkSizeText, out int chunkSize)
-        {
-            if (chunkSizeText.IsSingleSegment)
-            {
-                if (!Utf8Parser.TryParse(chunkSizeText.FirstSpan, out chunkSize, out _, 'x'))
-                {
-                    return false;
-                }
-            }
             else
             {
-                Span<byte> chunkSizeTextSpan = stackalloc byte[128];
-                chunkSizeText.CopyTo(chunkSizeTextSpan);
-
-                if (!Utf8Parser.TryParse(chunkSizeTextSpan, out chunkSize, out _, 'x'))
-                {
-                    return false;
-                }
+                httpResponse.State = HttpResponseState.Error;
             }
-            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool TryParseChunkPrefix(in ReadOnlySpan<byte> chunkSizeText, out int chunkSize)
+        {
+            return Utf8Parser.TryParse(chunkSizeText, out chunkSize, out _, 'x');
         }
 
         private static bool TryParseContentLength(in ReadOnlySequence<byte> remaining, out int contentLength)
