@@ -152,13 +152,12 @@ namespace PipeliningClient
             var stdDev = CalculateStdDev(results);
 
             Console.SetCursorPosition(0, Console.CursorTop);
-            Console.WriteLine($"{Connections} connections");
-            Console.WriteLine($"Average RPS: {totalTps:N0}");
-            Console.WriteLine($"Max RPS: {results.Max():N0}");
-            Console.WriteLine($"20x: {totalRequests:N0}");
-            Console.WriteLine($"Bad Responses: {_errors:N0}");
-            Console.WriteLine($"Socket Errors: {_socketErrors:N0}");
-            Console.WriteLine($"StdDev: {stdDev:N0}");
+            Console.WriteLine($"Average RPS:     {totalTps:N0}");
+            Console.WriteLine($"Max RPS:         {results.Max():N0}");
+            Console.WriteLine($"2xx:             {totalRequests:N0}");
+            Console.WriteLine($"Bad Responses:   {_errors:N0}");
+            Console.WriteLine($"Socket Errors:   {_socketErrors:N0}");
+            Console.WriteLine($"StdDev:          {stdDev:N0}");
         }
 
         public static async Task DoWorkAsync()
