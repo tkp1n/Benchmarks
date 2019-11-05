@@ -205,7 +205,7 @@ namespace BenchmarksDriver
             var serverArgumentsOption = app.Option("--server-args",
                 "Argument to pass to the server application. (e.g., --server-args \"--raw=true\" --server-args \"single_value\")", CommandOptionType.MultipleValue);
             var clientArgumentsOption = app.Option("--client-args",
-                "Argument to pass to the client application. (e.g., --client-args \"--raw=true\" --client-args \"single_value\")", CommandOptionType.MultipleValue);
+                "Argument to pass to the client application. The server url can be injected using {{server-url}}. (e.g., --client-args \"--raw=true\" --client-args \"single_value\")", CommandOptionType.MultipleValue);
             var serverNoArgumentsOptions = app.Option("--server-no-arguments",
                 "Removes any predefined arguments from the server application command line.", CommandOptionType.NoValue);
             var clientNoArgumentsOptions = app.Option("--client-no-arguments",
@@ -1257,6 +1257,9 @@ namespace BenchmarksDriver
 
                         // Set the URL on which the server should be reached from the clients as an environment variable
                         clientJob.EnvironmentVariables.Add("SERVER_URL", jobOnServer._serverJob.Url);
+
+                        // Look for {{server-url}} placeholder in the client arguments
+                        clientJob.Arguments = clientJob.Arguments.Replace("{{server-url}}", jobOnServer._serverJob.Url);
 
                         var jobsOnClient = clientUris.Select(clientUri => new Job(clientJob, clientUri, _displayOutputOption)).ToArray();
                         
