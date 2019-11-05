@@ -10,14 +10,11 @@ namespace PipeliningClient
 {
     class Program
     {
+        private static object _synLock = new object();
+
         private static int _counter;
-        public static void IncrementCounter() => Interlocked.Increment(ref _counter);
-
         private static int _errors;
-        public static void IncrementError() => Interlocked.Increment(ref _errors);
-
         private static int _socketErrors;
-        public static void IncrementSocketError() => Interlocked.Increment(ref _socketErrors);
 
         private static int _running;
         public static bool IsRunning => _running == 1;
@@ -71,7 +68,6 @@ namespace PipeliningClient
 
             DateTime startTime = default, stopTime = default;
 
-            var totalRequests = 0;
             var results = new List<double>();
 
             IEnumerable<Task> CreateTasks()
@@ -88,29 +84,15 @@ namespace PipeliningClient
 
                         Console.WriteLine($"Running for {ExecutionTimeSeconds}s...");
 
-                        Interlocked.Exchange(ref _counter, 0);
-                        Interlocked.Exchange(ref _errors, 0);
-                        Interlocked.Exchange(ref _socketErrors, 0);
+                        // Restart counters when measurement actually begins
+                        lock (_synLock)
+                        {
+                            _counter = 0;
+                            _errors = 0;
+                            _socketErrors = 0;
+                        }
 
                         startTime = DateTime.UtcNow;
-                        var lastDisplay = startTime;
-
-                        while (IsRunning)
-                        {
-                            await Task.Delay(200);
-
-                            var now = DateTime.UtcNow;
-                            var tps = (int)(_counter / (now - lastDisplay).TotalSeconds);
-                            var remaining = (int)(ExecutionTimeSeconds - (now - startTime).TotalSeconds);
-
-                            results.Add(tps);
-
-                            //Console.Write($"{tps} tps, {remaining}s                     ");
-                            //Console.SetCursorPosition(0, Console.CursorTop);
-
-                            lastDisplay = now;
-                            totalRequests += Interlocked.Exchange(ref _counter, 0);
-                        }
                     });
 
                 // Shutdown everything
@@ -135,7 +117,7 @@ namespace PipeliningClient
 
             await Task.WhenAll(CreateTasks());
 
-            var totalTps = (int)(totalRequests / (stopTime - startTime).TotalSeconds);
+            var totalTps = (int)(_counter / (stopTime - startTime).TotalSeconds);
 
             results.Sort();
             results.RemoveAt(0);
@@ -154,7 +136,7 @@ namespace PipeliningClient
             Console.SetCursorPosition(0, Console.CursorTop);
             Console.WriteLine($"Average RPS:     {totalTps:N0}");
             Console.WriteLine($"Max RPS:         {results.Max():N0}");
-            Console.WriteLine($"2xx:             {totalRequests:N0}");
+            Console.WriteLine($"2xx:             {_counter:N0}");
             Console.WriteLine($"Bad Responses:   {_errors:N0}");
             Console.WriteLine($"Socket Errors:   {_socketErrors:N0}");
             Console.WriteLine($"StdDev:          {stdDev:N0}");
@@ -168,6 +150,11 @@ namespace PipeliningClient
                 using (var connection = new HttpConnection(ServerUrl, PipelineDepth, Headers))
                 {
                     await connection.ConnectAsync();
+
+                    // Counters local to this connection
+                    var counter = 0;
+                    var errors = 0;
+                    var socketErrors = 0;
 
                     try
                     {
@@ -192,16 +179,16 @@ namespace PipeliningClient
                                 {
                                     if (response.StatusCode >= 200 && response.StatusCode < 300)
                                     {
-                                        IncrementCounter();
+                                        counter++;
                                     }
                                     else
                                     {
-                                        IncrementError();
+                                        errors++;
                                     }
                                 }
                                 else
                                 {
-                                    IncrementSocketError();
+                                    socketErrors++;
                                     doBreak = true;
                                 }
                             }
@@ -214,7 +201,17 @@ namespace PipeliningClient
                     }
                     catch
                     {
-                        IncrementSocketError();
+                        socketErrors++;
+                    }
+                    finally
+                    {
+                        // Update the global counters when the connections is ending
+                        lock (_synLock)
+                        {
+                            _counter += counter;
+                            _errors += errors;
+                            _socketErrors += socketErrors;
+                        }
                     }
                 }
             }
