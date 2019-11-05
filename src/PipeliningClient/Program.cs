@@ -117,7 +117,6 @@ namespace PipeliningClient
 
             var totalTps = (int)(_counter / (stopTime - startTime).TotalSeconds);
 
-            Console.SetCursorPosition(0, Console.CursorTop);
             Console.WriteLine($"Average RPS:     {totalTps:N0}");
             Console.WriteLine($"2xx:             {_counter:N0}");
             Console.WriteLine($"Bad Responses:   {_errors:N0}");
