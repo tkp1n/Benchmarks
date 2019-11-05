@@ -68,8 +68,6 @@ namespace PipeliningClient
 
             DateTime startTime = default, stopTime = default;
 
-            var results = new List<double>();
-
             IEnumerable<Task> CreateTasks()
             {
                 // Statistics thread
@@ -119,27 +117,11 @@ namespace PipeliningClient
 
             var totalTps = (int)(_counter / (stopTime - startTime).TotalSeconds);
 
-            results.Sort();
-            results.RemoveAt(0);
-            results.RemoveAt(results.Count - 1);
-
-            double CalculateStdDev(ICollection<double> values)
-            {
-                var avg = values.Average();
-                var sum = values.Sum(d => Math.Pow(d - avg, 2));
-
-                return Math.Sqrt(sum / values.Count);
-            }
-
-            var stdDev = CalculateStdDev(results);
-
             Console.SetCursorPosition(0, Console.CursorTop);
             Console.WriteLine($"Average RPS:     {totalTps:N0}");
-            Console.WriteLine($"Max RPS:         {results.Max():N0}");
             Console.WriteLine($"2xx:             {_counter:N0}");
             Console.WriteLine($"Bad Responses:   {_errors:N0}");
             Console.WriteLine($"Socket Errors:   {_socketErrors:N0}");
-            Console.WriteLine($"StdDev:          {stdDev:N0}");
         }
 
         public static async Task DoWorkAsync()
