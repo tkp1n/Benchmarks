@@ -19,6 +19,9 @@ namespace PipeliningClient
         private static int _running;
         public static bool IsRunning => _running == 1;
 
+        private static int _measuring;
+        public static bool Measuring => _measuring == 1;
+
         public static string ServerUrl { get; set; }
         public static int PipelineDepth { get; set; }
         public static int WarmupTimeSeconds { get; set; }
@@ -90,6 +93,8 @@ namespace PipeliningClient
                             _socketErrors = 0;
                         }
 
+                        Interlocked.Exchange(ref _measuring, 1);
+
                         startTime = DateTime.UtcNow;
                     });
 
@@ -156,21 +161,24 @@ namespace PipeliningClient
                             {
                                 var response = responses[k];
 
-                                if (response.State == HttpResponseState.Completed)
+                                if (Measuring)
                                 {
-                                    if (response.StatusCode >= 200 && response.StatusCode < 300)
+                                    if (response.State == HttpResponseState.Completed)
                                     {
-                                        counter++;
+                                        if (response.StatusCode >= 200 && response.StatusCode < 300)
+                                        {
+                                            counter++;
+                                        }
+                                        else
+                                        {
+                                            errors++;
+                                        }
                                     }
                                     else
                                     {
-                                        errors++;
+                                        socketErrors++;
+                                        doBreak = true;
                                     }
-                                }
-                                else
-                                {
-                                    socketErrors++;
-                                    doBreak = true;
                                 }
                             }
 
