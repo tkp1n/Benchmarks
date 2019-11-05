@@ -26,10 +26,14 @@ namespace PipeliningClient
         private static ReadOnlySpan<byte> ContentLength => new byte[] { (byte)'C', (byte)'o', (byte)'n', (byte)'t', (byte)'e', (byte)'n', (byte)'t', (byte)'-', (byte)'L', (byte)'e', (byte)'n', (byte)'g', (byte)'t', (byte)'h' };
         private static ReadOnlySpan<byte> NewLine => new byte[] { (byte)'\r', (byte)'\n' };
 
+        private readonly HttpResponse[] _responses;
+
         public HttpConnection(string url, int pipelineDepth, IEnumerable<string> headers)
         {
             _url = url;
             _pipelineDepth = pipelineDepth;
+            _responses = Enumerable.Range(1, pipelineDepth).Select(x => new HttpResponse()).ToArray();
+
             UriHelper.FromAbsolute(_url, out var scheme, out var host, out var path, out var query, out var fragment);
 
             var request = $"GET {path.Value}/{query.Value} HTTP/1.1\r\n";
@@ -43,7 +47,15 @@ namespace PipeliningClient
                 String.Join("\r\n", headers) +
                 "\r\n";
 
-            _requestBytes = Encoding.UTF8.GetBytes(request).AsMemory();
+            var requestPayload = Encoding.UTF8.GetBytes(request);
+            var buffer = new byte[requestPayload.Length * pipelineDepth];
+
+            for (var k = 0; k < _pipelineDepth; k++)
+            {
+                requestPayload.CopyTo(buffer, k * requestPayload.Length);
+            }
+
+            _requestBytes = buffer.AsMemory();
 
             _hostEndPoint = new IPEndPoint(IPAddress.Parse(host.Host), host.Port.Value);
 
@@ -59,20 +71,16 @@ namespace PipeliningClient
             var writing = FillPipeAsync(_socket, _pipe.Writer);
         }
 
-        public async IAsyncEnumerable<HttpResponse> SendRequestsAsync()
+        public async Task<HttpResponse[]> SendRequestsAsync()
         {
-            for (var k = 0; k < _pipelineDepth; k++)
-            {
-                await _socket.SendAsync(_requestBytes, SocketFlags.None);
-            }
+            await _socket.SendAsync(_requestBytes, SocketFlags.None);
 
             for (var k = 0; k < _pipelineDepth; k++)
             {
-                var httpResponse = new HttpResponse();
+                var httpResponse = _responses[k];
+                httpResponse.Reset();
 
                 await ReadPipeAsync(_pipe.Reader, httpResponse);
-
-                yield return httpResponse;
 
                 // Stop sending request if the communication faced a problem (socket error)
                 if (httpResponse.State != HttpResponseState.Completed)
@@ -80,6 +88,8 @@ namespace PipeliningClient
                     break;
                 }
             }
+
+            return _responses;
         }
 
         public void Dispose()

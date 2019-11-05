@@ -163,8 +163,6 @@ namespace PipeliningClient
 
         public static async Task DoWorkAsync()
         {
-            var responses = new HttpResponse[PipelineDepth];
-
             while (IsRunning)
             {
                 // Creating a new connection every time it is necessary
@@ -180,18 +178,17 @@ namespace PipeliningClient
                         {
                             sw.Start();
 
-                            var i = 0;
-                            await foreach (var response in connection.SendRequestsAsync())
-                            {
-                                responses[i++] = response;
-                            }
+                            var responses = await connection.SendRequestsAsync();
 
                             sw.Stop();
                             // Add the latency divided by the pipeline depth
 
                             var doBreak = false;
-                            foreach (var response in responses)
+                            
+                            for (var k = 0; k < responses.Length; k++ )
                             {
+                                var response = responses[k];
+
                                 if (response.State == HttpResponseState.Completed)
                                 {
                                     if (response.StatusCode >= 200 && response.StatusCode < 300)
