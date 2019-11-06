@@ -195,6 +195,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jenkins", "jenkins", "{1655
 		docker\jenkins\stop.sh = docker\jenkins\stop.sh
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Kestrel", "Kestrel", "{0BB66215-D55B-4E2C-B697-5A8674704EF4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformBenchmarks", "src\BenchmarksApps\Kestrel\PlatformBenchmarks\PlatformBenchmarks.csproj", "{E7CB1E3E-80BD-4487-B07B-7A8F53C2714B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -355,6 +359,14 @@ Global
 		{BDD73586-ED54-4F0C-8842-864697CD9D26}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BDD73586-ED54-4F0C-8842-864697CD9D26}.Release|x86.ActiveCfg = Release|Any CPU
 		{BDD73586-ED54-4F0C-8842-864697CD9D26}.Release|x86.Build.0 = Release|Any CPU
+		{E7CB1E3E-80BD-4487-B07B-7A8F53C2714B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7CB1E3E-80BD-4487-B07B-7A8F53C2714B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7CB1E3E-80BD-4487-B07B-7A8F53C2714B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E7CB1E3E-80BD-4487-B07B-7A8F53C2714B}.Debug|x86.Build.0 = Debug|Any CPU
+		{E7CB1E3E-80BD-4487-B07B-7A8F53C2714B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7CB1E3E-80BD-4487-B07B-7A8F53C2714B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7CB1E3E-80BD-4487-B07B-7A8F53C2714B}.Release|x86.ActiveCfg = Release|Any CPU
+		{E7CB1E3E-80BD-4487-B07B-7A8F53C2714B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -393,6 +405,8 @@ Global
 		{2F523E47-8703-4F53-BEFF-833872482C2A} = {EF444B27-3CBA-4581-893A-7F6DB5527371}
 		{BDD73586-ED54-4F0C-8842-864697CD9D26} = {995FCFF9-E5F6-4BDD-8E5B-FBDEA21145F9}
 		{165508DE-D568-4403-8B58-3AB9F9770DF0} = {EF444B27-3CBA-4581-893A-7F6DB5527371}
+		{0BB66215-D55B-4E2C-B697-5A8674704EF4} = {A9BDD13F-8E19-459E-BE3F-4484AE699265}
+		{E7CB1E3E-80BD-4487-B07B-7A8F53C2714B} = {0BB66215-D55B-4E2C-B697-5A8674704EF4}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C48AD7EE-82B1-4307-A869-3FC14AC9B21F}
