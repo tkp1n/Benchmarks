@@ -1398,9 +1398,9 @@ namespace BenchmarksDriver
 
                             foreach (var jobOnClient in jobsOnClient)
                             {
-                                if (jobOnClient._serverJob.Events.Any())
+                                if (jobOnClient._serverJob.Measurements.Any())
                                 {
-                                    Log.Write(JsonConvert.SerializeObject(jobOnClient._serverJob.Events));
+                                    Log.Write(JsonConvert.SerializeObject(jobOnClient._serverJob.Measurements, Formatting.Indented));
                                 }
                                 
                                 //foreach (var measurement in jobOnClient._serverJob.Events)

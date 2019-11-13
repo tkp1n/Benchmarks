@@ -97,9 +97,14 @@ namespace BenchmarkServer
         public static TimeSpan BuildTimeout = TimeSpan.FromMinutes(30);
 
         private static string _startPerfviewArguments;
+
         private static ulong eventPipeSessionId = 0;
         private static Task eventPipeTask = null;
         private static bool eventPipeTerminated = false;
+
+        private static ulong measurementsSessionId = 0;
+        private static Task measurementsTask = null;
+        private static bool measurementsTerminated = false;
 
         static Startup()
         {
@@ -391,6 +396,10 @@ namespace BenchmarkServer
                 eventPipeSessionId = 0;
                 eventPipeTask = null;
                 eventPipeTerminated = false;
+
+                measurementsSessionId = 0;
+                measurementsTask = null;
+                measurementsTerminated = false;
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
@@ -806,6 +815,22 @@ namespace BenchmarkServer
                                     if (process != null && !eventPipeTerminated && !!process.HasExited)
                                     {
                                         EventPipeClient.StopTracing(process.Id, eventPipeSessionId);
+                                    }
+                                }
+                                catch (EndOfStreamException)
+                                {
+                                    // If the app we're monitoring exits abruptly, this may throw in which case we just swallow the exception and exit gracefully.
+                                }
+                            }
+
+                            // Releasing Measurements
+                            if (measurementsTask != null)
+                            {
+                                try
+                                {
+                                    if (process != null && !measurementsTerminated && !!process.HasExited)
+                                    {
+                                        EventPipeClient.StopTracing(process.Id, measurementsSessionId);
                                     }
                                 }
                                 catch (EndOfStreamException)
@@ -2472,6 +2497,8 @@ namespace BenchmarkServer
                 }
             }
 
+            StartMeasurement(job);
+
             if (job.MemoryLimitInBytes > 0)
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -2522,13 +2549,10 @@ namespace BenchmarkServer
                 {
                     var providerList = new List<Provider>()
                         {
-                            //new Provider(
-                            //    name: "System.Runtime",
-                            //    eventLevel: EventLevel.Informational,
-                            //    filterData: "EventCounterIntervalSec=1"),
                             new Provider(
-                                name: "Benchmarks",
-                                eventLevel: EventLevel.Verbose),
+                                name: "System.Runtime",
+                                eventLevel: EventLevel.Informational,
+                                filterData: "EventCounterIntervalSec=1"),
                         };
 
                     var configuration = new SessionConfiguration(
@@ -2570,15 +2594,6 @@ namespace BenchmarkServer
                                 default: Log.WriteLine($"Unknown CounterType: {payloadFields["CounterType"]}"); break;
                             }
                         }
-                        else if (eventData.ProviderName == "Benchmarks")
-                        {
-                            job.Events.Add(new SensorValue
-                            {
-                                OccuredUtc = eventData.TimeStamp,
-                                Name = eventData.PayloadByName("name").ToString(),
-                                Value = eventData.PayloadByName("value")
-                            });
-                        }
                     };
 
                     source.Process();
@@ -2594,6 +2609,58 @@ namespace BenchmarkServer
             });
 
             eventPipeTask.Start();
+        }
+
+        private static void StartMeasurement(ServerJob job)
+        {
+            measurementsTerminated = false;
+            measurementsTask = new Task(() =>
+            {
+                Log.WriteLine("Starting measurement");
+
+                try
+                {
+                    var providerList = new List<Provider>()
+                        {
+                            new Provider(
+                                name: "Benchmarks",
+                                eventLevel: EventLevel.Verbose),
+                        };
+
+                    var configuration = new SessionConfiguration(
+                            circularBufferSizeMB: 1000,
+                            format: EventPipeSerializationFormat.NetTrace,
+                            providers: providerList);
+
+                    var binaryReader = EventPipeClient.CollectTracing(job.ProcessId, configuration, out measurementsSessionId);
+                    var source = new EventPipeEventSource(binaryReader);
+                    source.Dynamic.All += (eventData) =>
+                    {
+                        // We only track event counters for System.Runtime
+                        if (eventData.ProviderName == "Benchmarks")
+                        {
+                            job.Measurements.Add(new Measurement
+                            {
+                                TimeStamp = eventData.TimeStamp,
+                                Name = eventData.PayloadByName("name").ToString(),
+                                Value = eventData.PayloadByName("value")
+                            });
+                        }
+                    };
+
+                    source.Process();
+                }
+                catch (Exception ex)
+                {
+                    Log.WriteLine($"[ERROR] {ex.ToString()}");
+                }
+                finally
+                {
+                    measurementsTerminated = true; // This indicates that the runtime is done. We shouldn't try to talk to it anymore.
+                }
+            });
+
+            measurementsTask.Start();
         }
 
         private static void StartCollection(string workingDirectory, ServerJob job)
