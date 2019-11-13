@@ -2540,7 +2540,7 @@ namespace BenchmarkServer
                     var source = new EventPipeEventSource(binaryReader);
                     source.Dynamic.All += (eventData) =>
                     {
-                        Log.WriteLine(JsonConvert.SerializeObject(eventData));
+                        Log.WriteLine(eventData.Dump());
                         return;
 
                         // We only track event counters
