@@ -2536,6 +2536,8 @@ namespace BenchmarkServer
                     var source = new EventPipeEventSource(binaryReader);
                     source.Dynamic.All += (eventData) =>
                     {
+                        Log.WriteLine("EVENT: " + eventData.EventName);
+
                         // We only track event counters
                         if (!eventData.EventName.Equals("EventCounters"))
                         {
