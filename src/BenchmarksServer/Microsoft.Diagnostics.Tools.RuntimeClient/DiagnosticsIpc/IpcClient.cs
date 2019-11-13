@@ -47,7 +47,7 @@ namespace Microsoft.Diagnostics.Tools.RuntimeClient.DiagnosticsIpc
 
                 while (true)
                 {
-                    ipcPort = Directory.GetFiles(IpcRootPath, "dotnet-diagnostic-{processId}-*") // Try best match.
+                    ipcPort = Directory.GetFiles(IpcRootPath, $"dotnet-diagnostic-{processId}-*") // Try best match.
                     .Select(namedPipe =>
                     {
                         Log.WriteLine("TESTING:" + (new FileInfo(namedPipe)).Name);
