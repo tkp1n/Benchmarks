@@ -55,12 +55,13 @@ namespace Microsoft.Diagnostics.Tools.RuntimeClient.DiagnosticsIpc
                     })
                     .SingleOrDefault(input => Regex.IsMatch(input, $"^dotnet-diagnostic-{processId}-(\\d+)-socket$"));
 
-                    if (ipcPort == null && attempts >= 3)
+                    // Stop when a match was found or too many attempts
+                    if (ipcPort != null || attempts > 2)
                     {
-                        Log.WriteLine("Too many attempts");
-
                         break;
                     }
+
+                    Log.WriteLine("Retrying...");
 
                     // Wait some time for the file to be created
                     attempts++;
