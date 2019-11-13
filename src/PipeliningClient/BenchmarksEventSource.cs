@@ -19,7 +19,7 @@ namespace PipeliningClient
         private long _failedRequests;
 
         internal BenchmarksEventSource()
-            : this("System.Runtime")
+            : this("Benchmarks")
         {
 
         }

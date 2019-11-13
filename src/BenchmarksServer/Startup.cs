@@ -2521,10 +2521,13 @@ namespace BenchmarkServer
                 {
                     var providerList = new List<Provider>()
                         {
-                        new Provider(
-                            name: "System.Runtime",
-                            eventLevel: EventLevel.Informational,
-                            filterData: "EventCounterIntervalSec=1"),
+                            new Provider(
+                                name: "System.Runtime",
+                                eventLevel: EventLevel.Informational,
+                                filterData: "EventCounterIntervalSec=1"),
+                            new Provider(
+                                name: "Benchmarks",
+                                eventLevel: EventLevel.Verbose),
                         };
 
                     var configuration = new SessionConfiguration(
@@ -2536,13 +2539,13 @@ namespace BenchmarkServer
                     var source = new EventPipeEventSource(binaryReader);
                     source.Dynamic.All += (eventData) =>
                     {
-                        Log.WriteLine("EVENT: " + eventData.EventName);
-
                         // We only track event counters
                         if (!eventData.EventName.Equals("EventCounters"))
                         {
                             return;
                         }
+
+                        Log.WriteLine("EVENT: " + eventData.EventName);
 
                         var payloadVal = (IDictionary<string, object>)(eventData.PayloadValue(0));
                         var payloadFields = (IDictionary<string, object>)(payloadVal["Payload"]);

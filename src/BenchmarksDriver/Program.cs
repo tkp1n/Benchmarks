@@ -1396,6 +1396,18 @@ namespace BenchmarksDriver
                             var workingSet = Math.Round(((double)serverCounters.Select(x => x.WorkingSet).DefaultIfEmpty(0).Max()) / (1024 * 1024), 3);
                             var cpu = serverCounters.Select(x => x.CpuPercentage).DefaultIfEmpty(0).Max();
 
+                            if (clientJob.CollectCounters)
+                            {
+                                Log.Write("COUNTERS:");
+                                foreach (var jobOnClient in jobsOnClient)
+                                {
+                                    foreach(var counter in jobOnClient._serverJob.Counters)
+                                    {
+                                        Log.Write(counter.Key);
+                                    }
+                                }
+                            }
+
                             var statistics = new Statistics
                             {
                                 //RequestsPerSecond = clientJobs.Sum(clientJob => clientJob.RequestsPerSecond),
