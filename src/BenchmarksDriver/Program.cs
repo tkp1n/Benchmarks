@@ -56,7 +56,8 @@ namespace BenchmarksDriver
             _collectCountersOption,
             _noStartupLatencyOption,
             _displayBuildOption,
-            _displayOutputOption
+            _displayClientOutputOption,
+            _displayServerOutputOption
             ;
 
         private static Dictionary<string, string> _deprecatedArguments = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -173,7 +174,9 @@ namespace BenchmarksDriver
                 "Stores the results in a local file, e.g. --save baseline. If the extension is not specified, '.bench.json' is used.", CommandOptionType.SingleValue);
             var diffOption = app.Option("--diff",
                 "Displays the results of the run compared to a previously saved result, e.g. --diff baseline. If the extension is not specified, '.bench.json' is used.", CommandOptionType.SingleValue);
-            _displayOutputOption = app.Option("--display-output",
+            _displayClientOutputOption = app.Option("--client-display-output",
+                "Displays the standard output from the client job.", CommandOptionType.NoValue);
+            _displayServerOutputOption = app.Option("--server-display-output",
                 "Displays the standard output from the server job.", CommandOptionType.NoValue);
             _displayBuildOption = app.Option("--display-build",
                 "Displays the standard output from the build step.", CommandOptionType.NoValue);
@@ -1183,7 +1186,7 @@ namespace BenchmarksDriver
 
                 try
                 {
-                    jobOnServer = new Job(serverJob, serverUri, _displayOutputOption);
+                    jobOnServer = new Job(serverJob, serverUri, _displayServerOutputOption.HasValue());
 
                     // Start server
                     serverJobUri = await jobOnServer.StartAsync(
@@ -1261,7 +1264,7 @@ namespace BenchmarksDriver
                         // Look for {{server-url}} placeholder in the client arguments
                         clientJob.Arguments = clientJob.Arguments.Replace("{{server-url}}", jobOnServer._serverJob.Url);
 
-                        var jobsOnClient = clientUris.Select(clientUri => new Job(clientJob, clientUri, _displayOutputOption)).ToArray();
+                        var jobsOnClient = clientUris.Select(clientUri => new Job(clientJob, clientUri, _displayClientOutputOption.HasValue())).ToArray();
                         
                         // Don't run the client job for None and BenchmarkDotNet
                         if (!IsConsoleApp)
