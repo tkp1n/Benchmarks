@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
+using BenchmarkServer;
 
 namespace Microsoft.Diagnostics.Tools.RuntimeClient.DiagnosticsIpc
 {
@@ -41,7 +42,11 @@ namespace Microsoft.Diagnostics.Tools.RuntimeClient.DiagnosticsIpc
             else
             {
                 string ipcPort = Directory.GetFiles(IpcRootPath) // Try best match.
-                    .Select(namedPipe => (new FileInfo(namedPipe)).Name)
+                    .Select(namedPipe =>
+                    {
+                        Log.WriteLine("FOUND:" + (new FileInfo(namedPipe)).Name);
+                        return (new FileInfo(namedPipe)).Name;
+                    })
                     .SingleOrDefault(input => Regex.IsMatch(input, $"^dotnet-diagnostic-{processId}-(\\d+)-socket$"));
                 if (ipcPort == null)
                 {
