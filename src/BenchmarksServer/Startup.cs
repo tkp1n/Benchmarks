@@ -30,6 +30,7 @@ using Microsoft.Diagnostics.Tracing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Repository;
 using OperatingSystem = Benchmarks.ServerJob.OperatingSystem;
@@ -2521,10 +2522,10 @@ namespace BenchmarkServer
                 {
                     var providerList = new List<Provider>()
                         {
-                            new Provider(
-                                name: "System.Runtime",
-                                eventLevel: EventLevel.Informational,
-                                filterData: "EventCounterIntervalSec=1"),
+                            //new Provider(
+                            //    name: "System.Runtime",
+                            //    eventLevel: EventLevel.Informational,
+                            //    filterData: "EventCounterIntervalSec=1"),
                             new Provider(
                                 name: "Benchmarks",
                                 eventLevel: EventLevel.Verbose),
@@ -2539,13 +2540,14 @@ namespace BenchmarkServer
                     var source = new EventPipeEventSource(binaryReader);
                     source.Dynamic.All += (eventData) =>
                     {
-                        // We only track event counters
-                        if (!eventData.EventName.Equals("EventCounters"))
-                        {
-                            return;
-                        }
+                        Log.WriteLine(JsonConvert.SerializeObject(eventData));
+                        return;
 
-                        Log.WriteLine("EVENT: " + eventData.EventName);
+                        // We only track event counters
+                        //if (!eventData.EventName.Equals("EventCounters"))
+                        //{
+                        //    return;
+                        //}
 
                         var payloadVal = (IDictionary<string, object>)(eventData.PayloadValue(0));
                         var payloadFields = (IDictionary<string, object>)(payloadVal["Payload"]);
