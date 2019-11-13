@@ -53,11 +53,14 @@ namespace BenchmarksDriver
             _branchOption,
             _hashOption,
             _noGlobalJsonOption,
-            _collectCountersOption,
+            _serverCollectCountersOption,
+            _clientCollectCountersOption,
             _noStartupLatencyOption,
             _displayBuildOption,
             _displayClientOutputOption,
-            _displayServerOutputOption
+            _displayServerOutputOption,
+            _serverCollectStartupOption,
+            _clientCollectStartupOption
             ;
 
         private static Dictionary<string, string> _deprecatedArguments = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -269,10 +272,14 @@ namespace BenchmarksDriver
                 CommandOptionType.MultipleValue);
             var collectTraceOption = app.Option("--collect-trace",
                 "Collect a PerfView trace.", CommandOptionType.NoValue);
-            var collectStartup = app.Option("--collect-startup",
-                "Includes the startup phase in the trace.", CommandOptionType.NoValue);
-            _collectCountersOption = app.Option("--collect-counters",
-                "Collect event counters.", CommandOptionType.NoValue);
+            _serverCollectStartupOption = app.Option("--server-collect-startup",
+                "Includes the startup phase in the server trace.", CommandOptionType.NoValue);
+            _clientCollectStartupOption = app.Option("--client-collect-startup",
+                "Includes the startup phase in the client trace.", CommandOptionType.NoValue);
+            _serverCollectCountersOption = app.Option("--server-collect-counters",
+                "Collect event counters on the server.", CommandOptionType.NoValue);
+            _clientCollectCountersOption = app.Option("--client-collect-counters",
+                "Collect event counters on the client.", CommandOptionType.NoValue);
             _enableEventPipeOption = app.Option("--enable-eventpipe",
                 "Enables EventPipe perf collection.", CommandOptionType.NoValue);
             _eventPipeArgumentsOption = app.Option("--eventpipe-arguments",
@@ -766,11 +773,11 @@ namespace BenchmarksDriver
                         serverJob.CollectArguments = _defaultTraceArguments;
                     }
                 }
-                if (collectTraceOption.HasValue())
+                if (_serverCollectStartupOption.HasValue())
                 {
                     serverJob.CollectStartup = true;
                 }
-                if (_collectCountersOption.HasValue())
+                if (_serverCollectCountersOption.HasValue())
                 {
                     serverJob.CollectCounters = true;
                 }
@@ -900,9 +907,19 @@ namespace BenchmarksDriver
                     }
                 }
 
-            if (clientNoArgumentsOptions.HasValue())
+                if (clientNoArgumentsOptions.HasValue())
                 {
                     clientJob.NoArguments = true;
+                }
+
+                if (_clientCollectCountersOption.HasValue())
+                {
+                    clientJob.CollectCounters = true;
+                }
+
+                if (_clientCollectStartupOption.HasValue())
+                {
+                    clientJob.CollectStartup = true;
                 }
 
 
