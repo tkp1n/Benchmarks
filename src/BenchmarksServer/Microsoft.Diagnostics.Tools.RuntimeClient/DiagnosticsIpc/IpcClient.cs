@@ -57,7 +57,7 @@ namespace Microsoft.Diagnostics.Tools.RuntimeClient.DiagnosticsIpc
 
                     if (ipcPort == null && attempts >= 3)
                     {
-                        Log.WriteLine("Too many attempts);
+                        Log.WriteLine("Too many attempts");
 
                         break;
                     }
