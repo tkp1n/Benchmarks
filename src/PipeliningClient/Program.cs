@@ -68,7 +68,6 @@ namespace PipeliningClient
         public static async Task RunAsync()
         {
             Console.WriteLine($"Running {ExecutionTimeSeconds}s test @ {ServerUrl}");
-            BenchmarksEventSource.Log.BenchmarksStart();
 
             DateTime startTime = default, stopTime = default;
 
@@ -128,7 +127,10 @@ namespace PipeliningClient
             Console.WriteLine($"Bad Responses:   {_errors:N0}");
             Console.WriteLine($"Socket Errors:   {_socketErrors:N0}");
 
-            BenchmarksEventSource.Log.BenchmarksStop();
+            BenchmarksEventSource.Log.Statistic("avg-rps", totalTps);
+            BenchmarksEventSource.Log.Statistic("status-2xx", _counter);
+            BenchmarksEventSource.Log.Statistic("bad-response", _errors);
+            BenchmarksEventSource.Log.Statistic("socket-errors", _socketErrors);
         }
 
         public static async Task DoWorkAsync()
@@ -170,8 +172,6 @@ namespace PipeliningClient
                                     {
                                         if (response.StatusCode >= 200 && response.StatusCode < 300)
                                         {
-                                            BenchmarksEventSource.Log.RequestStart("", "");
-                                            BenchmarksEventSource.Log.RequestStop();
                                             counter++;
                                         }
                                         else
@@ -181,7 +181,6 @@ namespace PipeliningClient
                                     }
                                     else
                                     {
-                                        BenchmarksEventSource.Log.UnhandledException();
                                         socketErrors++;
                                         doBreak = true;
                                     }

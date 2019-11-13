@@ -2540,36 +2540,49 @@ namespace BenchmarkServer
                     var source = new EventPipeEventSource(binaryReader);
                     source.Dynamic.All += (eventData) =>
                     {
-                        Log.WriteLine(eventData.Dump());
-                        return;
-
-                        // We only track event counters
-                        //if (!eventData.EventName.Equals("EventCounters"))
-                        //{
-                        //    return;
-                        //}
-
-                        var payloadVal = (IDictionary<string, object>)(eventData.PayloadValue(0));
-                        var payloadFields = (IDictionary<string, object>)(payloadVal["Payload"]);
-
-                        var counterName = payloadFields["Name"].ToString();
-                        if (!job.Counters.TryGetValue(counterName, out var values))
+                        // We only track event counters for System.Runtime
+                        if (eventData.ProviderName == "System.Runtime")
                         {
-                            lock (job.Counters)
+                            if (!eventData.EventName.Equals("EventCounters"))
                             {
-                                if (!job.Counters.TryGetValue(counterName, out values))
+                                return;
+                            }
+
+                            var payloadVal = (IDictionary<string, object>)(eventData.PayloadValue(0));
+                            var payloadFields = (IDictionary<string, object>)(payloadVal["Payload"]);
+
+                            var counterName = payloadFields["Name"].ToString();
+                            if (!job.Counters.TryGetValue(counterName, out var values))
+                            {
+                                lock (job.Counters)
                                 {
-                                    job.Counters[counterName] = values = new ConcurrentQueue<string>();
+                                    if (!job.Counters.TryGetValue(counterName, out values))
+                                    {
+                                        job.Counters[counterName] = values = new ConcurrentQueue<string>();
+                                    }
                                 }
                             }
+
+                            switch (payloadFields["CounterType"])
+                            {
+                                case "Sum": values.Enqueue(payloadFields["Increment"].ToString()); break;
+                                case "Mean": values.Enqueue(payloadFields["Mean"].ToString()); break;
+                                default: Log.WriteLine($"Unknown CounterType: {payloadFields["CounterType"]}"); break;
+                            }
+                        }
+                        else if (eventData.ProviderName == "Benchmarks")
+                        {
+                            Log.WriteLine("name:" + eventData.PayloadByName("name").ToString());
+                            Log.WriteLine("value:" + eventData.PayloadByName("value").ToString());
+
+                            Log.WriteLine("dump:" + eventData.Dump());
+                            Log.WriteLine("json:" + JsonConvert.SerializeObject(eventData));
+                            return;
                         }
 
-                        switch (payloadFields["CounterType"])
-                        {
-                            case "Sum": values.Enqueue(payloadFields["Increment"].ToString()); break;
-                            case "Mean": values.Enqueue(payloadFields["Mean"].ToString()); break;
-                            default: Log.WriteLine($"Unknown CounterType: {payloadFields["CounterType"]}"); break;
-                        }
+
+
+                        
                     };
 
                     source.Process();
