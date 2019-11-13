@@ -128,6 +128,7 @@ namespace Benchmarks.ServerJob
         public string AfterScript { get; set; }
         public ulong MemoryLimitInBytes { get; set; }
         public ConcurrentDictionary<string, ConcurrentQueue<string>> Counters { get; set; } = new ConcurrentDictionary<string, ConcurrentQueue<string>>();
+        public ConcurrentBag<SensorValue> Events { get; set; } = new ConcurrentBag<SensorValue>();
 
         /// <summary>
         /// The build log. This property is kept on the server side.

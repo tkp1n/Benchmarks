@@ -2572,17 +2572,13 @@ namespace BenchmarkServer
                         }
                         else if (eventData.ProviderName == "Benchmarks")
                         {
-                            Log.WriteLine("name:" + eventData.PayloadByName("name").ToString());
-                            Log.WriteLine("value:" + eventData.PayloadByName("value").ToString());
-
-                            Log.WriteLine("dump:" + eventData.Dump());
-                            Log.WriteLine("json:" + JsonConvert.SerializeObject(eventData));
-                            return;
+                            job.Events.Add(new SensorValue
+                            {
+                                OccuredUtc = eventData.TimeStamp,
+                                Name = eventData.PayloadByName("name").ToString(),
+                                Value = eventData.PayloadByName("value")
+                            });
                         }
-
-
-
-                        
                     };
 
                     source.Process();
