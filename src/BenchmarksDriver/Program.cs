@@ -1414,11 +1414,22 @@ namespace BenchmarksDriver
                                 var measurements = jobOnClient._serverJob.Measurements.GroupBy(x => x.Name).ToDictionary(x => x.Key, x => x.ToList());
                                 var maxWidth = jobOnClient._serverJob.Metadata.Max(x => x.ShortDescription.Length) + 2;
 
+                                var previousSource = "";
+
                                 foreach (var metadata in jobOnClient._serverJob.Metadata)
                                 {
                                     if (!measurements.ContainsKey(metadata.Name))
                                     {
                                         continue;
+                                    }
+
+                                    if (previousSource != metadata.Source)
+                                    {
+                                        Log.Quiet("");
+                                        Log.Quiet($"{metadata.Source}:");
+                                        Log.Quiet($"");
+
+                                        previousSource = metadata.Source;
                                     }
 
                                     double result = 0;

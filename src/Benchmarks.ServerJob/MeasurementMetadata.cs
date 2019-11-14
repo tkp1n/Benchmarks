@@ -4,6 +4,7 @@ namespace Benchmarks.ServerJob
 {
     public class MeasurementMetadata
     {
+        public string Source { get; set; }
         public string Name { get; set; }
 
         // how to aggregate the value across multiple clients returning the same measurement

@@ -821,10 +821,11 @@ namespace BenchmarkServer
                         {
                             lock (job.Metadata)
                             {
-                                if (!job.Metadata.Any(x => x.Name == "cpu"))
+                                if (!job.Metadata.Any(x => x.Name == "benchmarks/cpu"))
                                 {
                                     job.Metadata.Add(new MeasurementMetadata
                                     {
+                                        Source = "Host Process",
                                         Name = "benchmarks/cpu",
                                         Aggregate = Operation.Max,
                                         Reduce = Operation.Max,
@@ -834,10 +835,11 @@ namespace BenchmarkServer
                                     });
                                 }
 
-                                if (!job.Metadata.Any(x => x.Name == "working-set"))
+                                if (!job.Metadata.Any(x => x.Name == "benchmarks/working-set"))
                                 {
                                     job.Metadata.Add(new MeasurementMetadata
                                     {
+                                        Source = "Host Process",
                                         Name = "benchmarks/working-set",
                                         Aggregate = Operation.Max,
                                         Reduce = Operation.Max,
@@ -2585,24 +2587,24 @@ namespace BenchmarkServer
 
         private static void StartCounters(ServerJob job)
         {
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/cpu-usage", LongDescription = "Amount of time the process has utilized the CPU (ms)",ShortDescription = "CPU Usage (%)", Format = "", Aggregate = Operation.Max, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/working-set", LongDescription = "Amount of working set used by the process (MB)",ShortDescription = "Working Set (MB)", Format = "", Aggregate = Operation.Max, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gc-heap-size", LongDescription = "Total heap size reported by the GC (MB)",ShortDescription = "GC Heap Size (MB)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gen-0-gc-count", LongDescription = "Number of Gen 0 GCs / sec",ShortDescription = "Gen 0 GC (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gen-1-gc-count", LongDescription = "Number of Gen 1 GCs / sec",ShortDescription = "Gen 1 GC (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gen-2-gc-count", LongDescription = "Number of Gen 2 GCs / sec",ShortDescription = "Gen 2 GC (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/time-in-gc", LongDescription = "% time in GC since the last GC",ShortDescription = "Time in GC (%)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gen-0-size", LongDescription = "Gen 0 Heap Size",ShortDescription = "Gen 0 Size (B)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gen-1-size", LongDescription = "Gen 1 Heap Size",ShortDescription = "Gen 1 Size (B)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gen-2-size", LongDescription = "Gen 2 Heap Size",ShortDescription = "Gen 2 Size (B)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/loh-size", LongDescription = "LOH Heap Size",ShortDescription = "LOH Size (B)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/alloc-rate", LongDescription = "Allocation Rate",ShortDescription = "Allocation Rate (B/sec)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/assembly-count", LongDescription = "Number of Assemblies Loaded",ShortDescription = "# of Assemblies Loaded", Format = "n0", Aggregate = Operation.Max, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/exception-count", LongDescription = "Number of Exceptions / sec",ShortDescription = "Exceptions (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/threadpool-thread-count", LongDescription = "Number of ThreadPool Threads",ShortDescription = "ThreadPool Threads Count", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/monitor-lock-contention-count", LongDescription = "Monitor Lock Contention Count",ShortDescription = "Lock Contention (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/threadpool-queue-length", LongDescription = "ThreadPool Work Items Queue Length",ShortDescription = "ThreadPool Queue Length", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
-            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/threadpool-completed-items-count", LongDescription = "ThreadPool Completed Work Items Count",ShortDescription = "ThreadPool Items (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/cpu-usage", LongDescription = "Amount of time the process has utilized the CPU (ms)",ShortDescription = "CPU Usage (%)", Format = "", Aggregate = Operation.Max, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/working-set", LongDescription = "Amount of working set used by the process (MB)",ShortDescription = "Working Set (MB)", Format = "", Aggregate = Operation.Max, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/gc-heap-size", LongDescription = "Total heap size reported by the GC (MB)",ShortDescription = "GC Heap Size (MB)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/gen-0-gc-count", LongDescription = "Number of Gen 0 GCs / sec",ShortDescription = "Gen 0 GC (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/gen-1-gc-count", LongDescription = "Number of Gen 1 GCs / sec",ShortDescription = "Gen 1 GC (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/gen-2-gc-count", LongDescription = "Number of Gen 2 GCs / sec",ShortDescription = "Gen 2 GC (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/time-in-gc", LongDescription = "% time in GC since the last GC",ShortDescription = "Time in GC (%)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/gen-0-size", LongDescription = "Gen 0 Heap Size",ShortDescription = "Gen 0 Size (B)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/gen-1-size", LongDescription = "Gen 1 Heap Size",ShortDescription = "Gen 1 Size (B)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/gen-2-size", LongDescription = "Gen 2 Heap Size",ShortDescription = "Gen 2 Size (B)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/loh-size", LongDescription = "LOH Heap Size",ShortDescription = "LOH Size (B)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/alloc-rate", LongDescription = "Allocation Rate",ShortDescription = "Allocation Rate (B/sec)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/assembly-count", LongDescription = "Number of Assemblies Loaded",ShortDescription = "# of Assemblies Loaded", Format = "n0", Aggregate = Operation.Max, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/exception-count", LongDescription = "Number of Exceptions / sec",ShortDescription = "Exceptions (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/threadpool-thread-count", LongDescription = "Number of ThreadPool Threads",ShortDescription = "ThreadPool Threads Count", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/monitor-lock-contention-count", LongDescription = "Monitor Lock Contention Count",ShortDescription = "Lock Contention (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/threadpool-queue-length", LongDescription = "ThreadPool Work Items Queue Length",ShortDescription = "ThreadPool Queue Length", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Source = "Counters", Name = "runtime-counter/threadpool-completed-items-count", LongDescription = "ThreadPool Completed Work Items Count",ShortDescription = "ThreadPool Items (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
 
             eventPipeTerminated = false;
             eventPipeTask = new Task(() =>
@@ -2729,6 +2731,7 @@ namespace BenchmarkServer
                             {
                                 job.Metadata.Add(new MeasurementMetadata
                                 {
+                                    Source = "Benchmark",
                                     Name = eventData.PayloadByName("name").ToString(),
                                     Aggregate = Enum.Parse<Operation>(eventData.PayloadByName("aggregate").ToString(), true),
                                     Reduce = Enum.Parse<Operation>(eventData.PayloadByName("reduce").ToString(), true),
