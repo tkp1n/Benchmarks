@@ -27,6 +27,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Diagnostics.Tools.RuntimeClient;
 using Microsoft.Diagnostics.Tracing;
+using Microsoft.Diagnostics.Tracing.Parsers.MicrosoftWindowsWPF;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -659,6 +660,20 @@ namespace BenchmarkServer
                                                             WorkingSet = workingSet,
                                                             CpuPercentage = cpu > 100 ? 0 : cpu
                                                         });
+
+                                                        job.Measurements.Add(new Measurement
+                                                        {
+                                                            Name = "benchmarks/working-set",
+                                                            Timestamp = now,
+                                                            Value = workingSet
+                                                        });
+
+                                                        job.Measurements.Add(new Measurement
+                                                        {
+                                                            Name = "benchmarks/cpu",
+                                                            Timestamp = now,
+                                                            Value = workingSet
+                                                        });
                                                     }
                                                 }
                                             }
@@ -707,6 +722,20 @@ namespace BenchmarkServer
                                                             Elapsed = now - startMonitorTime,
                                                             WorkingSet = process.WorkingSet64,
                                                             CpuPercentage = cpu
+                                                        });
+
+                                                        job.Measurements.Add(new Measurement
+                                                        {
+                                                            Name = "benchmarks/working-set",
+                                                            Timestamp = now,
+                                                            Value = process.WorkingSet64
+                                                        });
+
+                                                        job.Measurements.Add(new Measurement
+                                                        {
+                                                            Name = "benchmarks/cpu",
+                                                            Timestamp = now,
+                                                            Value = cpu
                                                         });
                                                     }
 
@@ -790,6 +819,35 @@ namespace BenchmarkServer
                         }
                         else if (job.State == ServerState.Initializing)
                         {
+                            lock (job.Metadata)
+                            {
+                                if (!job.Metadata.Any(x => x.Name == "cpu"))
+                                {
+                                    job.Metadata.Add(new MeasurementMetadata
+                                    {
+                                        Name = "benchmarks/cpu",
+                                        Aggregate = Operation.Max,
+                                        Reduce = Operation.Max,
+                                        Format = "",
+                                        LongDescription = "Amount of time the process has utilized the CPU (ms)",
+                                        ShortDescription = "CPU Usage (%)"
+                                    });
+                                }
+
+                                if (!job.Metadata.Any(x => x.Name == "working-set"))
+                                {
+                                    job.Metadata.Add(new MeasurementMetadata
+                                    {
+                                        Name = "benchmarks/working-set",
+                                        Aggregate = Operation.Max,
+                                        Reduce = Operation.Max,
+                                        Format = "",
+                                        LongDescription = "Amount of working set used by the process (MB)",
+                                        ShortDescription = "Working Set (MB)"
+                                    });
+                                }
+                            }
+
                             // The driver is supposed to send attachment in the initialize phase
                             if (DateTime.UtcNow - startMonitorTime > InitializeTimeout)
                             {
@@ -2540,6 +2598,25 @@ namespace BenchmarkServer
 
         private static void StartCounters(ServerJob job)
         {
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/cpu-usage", LongDescription = "Amount of time the process has utilized the CPU (ms)",ShortDescription = "CPU Usage (%)", Format = "", Aggregate = Operation.Max, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/working-set", LongDescription = "Amount of working set used by the process (MB)",ShortDescription = "Working Set (MB)", Format = "", Aggregate = Operation.Max, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gc-heap-size", LongDescription = "Total heap size reported by the GC (MB)",ShortDescription = "GC Heap Size (MB)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gen-0-gc-count", LongDescription = "Number of Gen 0 GCs / sec",ShortDescription = "Gen 0 GC (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gen-1-gc-count", LongDescription = "Number of Gen 1 GCs / sec",ShortDescription = "Gen 1 GC (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gen-2-gc-count", LongDescription = "Number of Gen 2 GCs / sec",ShortDescription = "Gen 2 GC (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/time-in-gc", LongDescription = "% time in GC since the last GC",ShortDescription = "Time in GC (%)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gen-0-size", LongDescription = "Gen 0 Heap Size",ShortDescription = "Gen 0 Size (B)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gen-1-size", LongDescription = "Gen 1 Heap Size",ShortDescription = "Gen 1 Size (B)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/gen-2-size", LongDescription = "Gen 2 Heap Size",ShortDescription = "Gen 2 Size (B)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/loh-size", LongDescription = "LOH Heap Size",ShortDescription = "LOH Size (B)", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/alloc-rate", LongDescription = "Allocation Rate",ShortDescription = "Allocation Rate (B/sec)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/assembly-count", LongDescription = "Number of Assemblies Loaded",ShortDescription = "# of Assemblies Loaded", Format = "n0", Aggregate = Operation.Max, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/exception-count", LongDescription = "Number of Exceptions / sec",ShortDescription = "Exceptions (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/threadpool-thread-count", LongDescription = "Number of ThreadPool Threads",ShortDescription = "ThreadPool Threads Count", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/monitor-lock-contention-count", LongDescription = "Monitor Lock Contention Count",ShortDescription = "Lock Contention (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/threadpool-queue-length", LongDescription = "ThreadPool Work Items Queue Length",ShortDescription = "ThreadPool Queue Length", Format = "n0", Aggregate = Operation.Median, Reduce = Operation.Max });
+            job.Metadata.Add( new MeasurementMetadata { Name = "runtime-counter/threadpool-completed-items-count", LongDescription = "ThreadPool Completed Work Items Count",ShortDescription = "ThreadPool Items (#/s)", Format = "n0", Aggregate = Operation.Avg, Reduce = Operation.Max });
+
             eventPipeTerminated = false;
             eventPipeTask = new Task(() =>
             {
@@ -2564,36 +2641,47 @@ namespace BenchmarkServer
                     var source = new EventPipeEventSource(binaryReader);
                     source.Dynamic.All += (eventData) =>
                     {
-                        // We only track event counters for System.Runtime
-                        if (eventData.ProviderName == "System.Runtime")
+                        // We only track event counters
+                        if (!eventData.EventName.Equals("EventCounters"))
                         {
-                            if (!eventData.EventName.Equals("EventCounters"))
-                            {
-                                return;
-                            }
+                            return;
+                        }
 
-                            var payloadVal = (IDictionary<string, object>)(eventData.PayloadValue(0));
-                            var payloadFields = (IDictionary<string, object>)(payloadVal["Payload"]);
+                        var measurement = new Measurement();
 
-                            var counterName = payloadFields["Name"].ToString();
-                            if (!job.Counters.TryGetValue(counterName, out var values))
+                        var payloadVal = (IDictionary<string, object>)(eventData.PayloadValue(0));
+                        var payloadFields = (IDictionary<string, object>)(payloadVal["Payload"]);
+
+                        var counterName = payloadFields["Name"].ToString();
+                        if (!job.Counters.TryGetValue(counterName, out var values))
+                        {
+                            lock (job.Counters)
                             {
-                                lock (job.Counters)
+                                if (!job.Counters.TryGetValue(counterName, out values))
                                 {
-                                    if (!job.Counters.TryGetValue(counterName, out values))
-                                    {
-                                        job.Counters[counterName] = values = new ConcurrentQueue<string>();
-                                    }
+                                    job.Counters[counterName] = values = new ConcurrentQueue<string>();
                                 }
                             }
-
-                            switch (payloadFields["CounterType"])
-                            {
-                                case "Sum": values.Enqueue(payloadFields["Increment"].ToString()); break;
-                                case "Mean": values.Enqueue(payloadFields["Mean"].ToString()); break;
-                                default: Log.WriteLine($"Unknown CounterType: {payloadFields["CounterType"]}"); break;
-                            }
                         }
+
+                        measurement.Name = "runtime-counter/" + counterName;
+
+                        switch (payloadFields["CounterType"])
+                        {
+                            case "Sum": 
+                                values.Enqueue(payloadFields["Increment"].ToString());
+                                measurement.Value = payloadFields["Increment"];
+                                break;
+                            case "Mean": 
+                                values.Enqueue(payloadFields["Mean"].ToString());
+                                measurement.Value = payloadFields["Mean"];
+                                break;
+                            default: 
+                                Log.WriteLine($"Unknown CounterType: {payloadFields["CounterType"]}"); 
+                                break;
+                        }
+
+                        measurement.Timestamp = eventData.TimeStamp;
                     };
 
                     source.Process();

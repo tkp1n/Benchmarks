@@ -127,19 +127,18 @@ namespace PipeliningClient
             Console.WriteLine($"Bad Responses:   {_errors:N0}");
             Console.WriteLine($"Socket Errors:   {_socketErrors:N0}");
 
-
             // If multiple samples are provided, take the max RPS, then sum the result from all clients
-            BenchmarksEventSource.Log.Metadata("avg-rps", "max", "sum", "RPS", "Requests per second", "n0");
-            BenchmarksEventSource.Log.Measure("avg-rps", totalTps);
+            BenchmarksEventSource.Log.Metadata("pipelineclient/avg-rps", "max", "sum", "RPS", "Requests per second", "n0");
+            BenchmarksEventSource.Log.Measure("pipelineclient/avg-rps", totalTps);
 
-            BenchmarksEventSource.Log.Metadata("status-2xx", "sum", "sum", "Total Requests", "Total Requests", "n0");
-            BenchmarksEventSource.Log.Measure("status-2xx", _counter);
+            BenchmarksEventSource.Log.Metadata("pipelineclient/status-2xx", "sum", "sum", "Successful Requests", "Successful Requests", "n0");
+            BenchmarksEventSource.Log.Measure("pipelineclient/status-2xx", _counter);
 
-            BenchmarksEventSource.Log.Metadata("bad-response", "sum", "sum", "Bad Responses", "Bad Responses", "n0");
-            BenchmarksEventSource.Log.Measure("bad-response", _errors);
+            BenchmarksEventSource.Log.Metadata("pipelineclient/bad-response", "sum", "sum", "Bad Responses", "Bad Responses", "n0");
+            BenchmarksEventSource.Log.Measure("pipelineclient/bad-response", _errors);
 
-            BenchmarksEventSource.Log.Metadata("socket-errors", "sum", "sum", "Socket Errors", "Socket Errors", "n0");
-            BenchmarksEventSource.Log.Measure("socket-errors", _socketErrors);
+            BenchmarksEventSource.Log.Metadata("pipelineclient/socket-errors", "sum", "sum", "Socket Errors", "Socket Errors", "n0");
+            BenchmarksEventSource.Log.Measure("pipelineclient/socket-errors", _socketErrors);
         }
 
         public static async Task DoWorkAsync()
