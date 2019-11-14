@@ -80,27 +80,6 @@ namespace BenchmarksDriver
             { "--clientThreads", "--client-threads" },
         };
 
-        public static CounterProfile[] Counters = new CounterProfile[]
-        {
-            new CounterProfile{ Name="cpu-usage", Description="Amount of time the process has utilized the CPU (ms)", DisplayName="CPU Usage (%)", Format="", Compute = x => x.Max() },
-            new CounterProfile{ Name="working-set", Description="Amount of working set used by the process (MB)", DisplayName="Working Set (MB)", Format="", Compute = x => x.Max()  },
-            new CounterProfile{ Name="gc-heap-size", Description="Total heap size reported by the GC (MB)", DisplayName="GC Heap Size (MB)", Format="n0", Compute = Percentile(50)  },
-            new CounterProfile{ Name="gen-0-gc-count", Description="Number of Gen 0 GCs / sec", DisplayName="Gen 0 GC (#/s)", Format="n0", Compute = x => x.Average()  },
-            new CounterProfile{ Name="gen-1-gc-count", Description="Number of Gen 1 GCs / sec", DisplayName="Gen 1 GC (#/s)", Format="n0", Compute = x => x.Average()  },
-            new CounterProfile{ Name="gen-2-gc-count", Description="Number of Gen 2 GCs / sec", DisplayName="Gen 2 GC (#/s)", Format="n0", Compute = x => x.Average()  },
-            new CounterProfile{ Name="time-in-gc", Description="% time in GC since the last GC", DisplayName="Time in GC (%)", Format="n0", Compute = x => x.Average()  },
-            new CounterProfile{ Name="gen-0-size", Description="Gen 0 Heap Size", DisplayName="Gen 0 Size (B)", Format="n0", Compute = Percentile(50)  },
-            new CounterProfile{ Name="gen-1-size", Description="Gen 1 Heap Size", DisplayName="Gen 1 Size (B)", Format="n0", Compute = Percentile(50)  },
-            new CounterProfile{ Name="gen-2-size", Description="Gen 2 Heap Size", DisplayName="Gen 2 Size (B)", Format="n0", Compute = Percentile(50)  },
-            new CounterProfile{ Name="loh-size", Description="LOH Heap Size", DisplayName="LOH Size (B)", Format="n0", Compute = Percentile(50)  },
-            new CounterProfile{ Name="alloc-rate", Description="Allocation Rate", DisplayName="Allocation Rate (B/sec)", Format="n0", Compute = x => x.Average()  },
-            new CounterProfile{ Name="assembly-count", Description="Number of Assemblies Loaded", DisplayName="# of Assemblies Loaded", Format="n0", Compute = x => x.Max()  },
-            new CounterProfile{ Name="exception-count", Description="Number of Exceptions / sec", DisplayName="Exceptions (#/s)", Format="n0", Compute = x => x.Average()  },
-            new CounterProfile{ Name="threadpool-thread-count", Description="Number of ThreadPool Threads", DisplayName="ThreadPool Threads Count", Format="n0", Compute = Percentile(50)  },
-            new CounterProfile{ Name="monitor-lock-contention-count", Description="Monitor Lock Contention Count", DisplayName="Lock Contention (#/s)", Format="n0", Compute = x => x.Average()  },
-            new CounterProfile{ Name="threadpool-queue-length", Description="ThreadPool Work Items Queue Length", DisplayName="ThreadPool Queue Length", Format="n0", Compute = Percentile(50)  },
-            new CounterProfile{ Name="threadpool-completed-items-count", Description="ThreadPool Completed Work Items Count", DisplayName="ThreadPool Items (#/s)", Format="n0", Compute = x => x.Average()  },
-        };
         static Program()
         {
             // Configuring the http client to trust the self-signed certificate
@@ -1401,15 +1380,39 @@ namespace BenchmarksDriver
                             //    latencyFirstRequest = clientJobs[0].LatencyFirstRequest;
                             //}
 
+                            // Display Environment information
+
+                            Log.Quiet("");
+                            Log.Quiet($"Server Environment");
+                            Log.Quiet($"-------------------");
+                            Log.Quiet("");
+                            Log.Quiet($"SDK:                         {jobOnServer._serverJob.SdkVersion}");
+                            Log.Quiet($"Runtime:                     {jobOnServer._serverJob.RuntimeVersion}");
+                            Log.Quiet($"ASP.NET Core:                {jobOnServer._serverJob.AspNetCoreVersion}");
+
+                            Log.Quiet("");
+                            Log.Quiet($"Clients Environment");
+                            Log.Quiet($"-------------------");
+                            Log.Quiet("");
+                            Log.Quiet($"SDK:                         {jobsOnClient.First()._serverJob.SdkVersion}");
+                            Log.Quiet($"Runtime:                     {jobsOnClient.First()._serverJob.RuntimeVersion}");
+                            Log.Quiet($"ASP.NET Core:                {jobsOnClient.First()._serverJob.AspNetCoreVersion}");
+
+
                             var serverCounters = jobOnServer._serverJob.ServerCounters;
                             var workingSet = Math.Round(((double)serverCounters.Select(x => x.WorkingSet).DefaultIfEmpty(0).Max()) / (1024 * 1024), 3);
                             var cpu = serverCounters.Select(x => x.CpuPercentage).DefaultIfEmpty(0).Max();
 
                             foreach (var jobOnClient in jobsOnClient)
                             {
+                                Log.Quiet("");
+                                Log.Quiet("Client Results");
+                                Log.Quiet($"-------------------");
+                                Log.Quiet("");
+
                                 // Group by name for easy lookup
                                 var measurements = jobOnClient._serverJob.Measurements.GroupBy(x => x.Name).ToDictionary(x => x.Key, x => x.ToList());
-                                var maxWidth = jobOnClient._serverJob.Metadata.Max(x => x.Name.Length) + 2;
+                                var maxWidth = jobOnClient._serverJob.Metadata.Max(x => x.ShortDescription.Length) + 2;
 
                                 foreach (var metadata in jobOnClient._serverJob.Metadata)
                                 {
@@ -1480,18 +1483,6 @@ namespace BenchmarksDriver
                                 //TotalRequests = clientJobs.Sum(clientJob => clientJob.Requests),
                                 //Duration = clientJobs[0].ActualDuration.TotalMilliseconds
                             };
-
-                            foreach (var entry in jobOnServer._serverJob.Counters)
-                            {
-                                statistics.Other[entry.Key] = entry.Value.Select(x => double.Parse(x)).Max();
-                                statistics.Samples[entry.Key] = entry.Value.Select(x => double.Parse(x)).ToArray();
-
-                                var knownCounter = Counters.FirstOrDefault(x => x.Name == entry.Key);
-                                if (knownCounter != null)
-                                {
-                                    statistics.Other[entry.Key] = knownCounter.Compute(entry.Value.Select(x => double.Parse(x)));
-                                }
-                            }
 
                             results.Add(statistics);
 
@@ -1745,41 +1736,6 @@ namespace BenchmarksDriver
                                     Log.Quiet(header + "|");
                                     Log.Quiet(separator + "|");
                                     Log.Quiet(values + "|");
-                                }
-                                else
-                                {
-                                    Log.Quiet($"RequestsPerSecond:           {average.RequestsPerSecond:n0}");
-                                    Log.Quiet($"Max CPU (%):                 {average.Cpu}");
-                                    Log.Quiet($"WorkingSet (MB):             {average.WorkingSet:n0}");
-                                    Log.Quiet($"Avg. Latency (ms):           {average.LatencyOnLoad}");
-                                    Log.Quiet($"Startup (ms):                {average.StartupMain}");
-                                    Log.Quiet($"First Request (ms):          {average.FirstRequest}");
-                                    Log.Quiet($"Latency (ms):                {average.Latency}");
-                                    Log.Quiet($"Total Requests:              {average.TotalRequests:n0}");
-                                    Log.Quiet($"Duration: (ms)               {average.Duration:n0}");
-                                    Log.Quiet($"Socket Errors:               {average.SocketErrors:n0}");
-                                    Log.Quiet($"Bad Responses:               {average.BadResponses:n0}");
-                                    Log.Quiet($"Build Time (ms):             {average.BuildTime:n0}");
-                                    Log.Quiet($"Published Size (KB):         {average.PublishedSize:n0}");
-                                    Log.Quiet($"SDK:                         {jobOnServer._serverJob.SdkVersion}");
-                                    Log.Quiet($"Runtime:                     {jobOnServer._serverJob.RuntimeVersion}");
-                                    Log.Quiet($"ASP.NET Core:                {jobOnServer._serverJob.AspNetCoreVersion}");
-
-                                    if (average.Other.Any())
-                                    {
-                                        Log.Quiet("");
-                                        Log.Quiet("Counters:");
-
-                                        foreach (var counter in Counters)
-                                        {
-                                            if (!average.Other.ContainsKey(counter.Name))
-                                            {
-                                                continue;
-                                            }
-
-                                            Log.Quiet($"{(counter.DisplayName + ":").PadRight(29, ' ')}{average.Other[counter.Name].ToString(counter.Format)}");
-                                        }
-                                    }
                                 }
 
                                 if (saveOption.HasValue())

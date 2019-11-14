@@ -842,8 +842,8 @@ namespace BenchmarkServer
                                         Aggregate = Operation.Max,
                                         Reduce = Operation.Max,
                                         Format = "n0",
-                                        LongDescription = "Amount of working set used by the process (MB)",
-                                        ShortDescription = "Working Set (MB)"
+                                        LongDescription = "Amount of working set used by the process (B)",
+                                        ShortDescription = "Working Set (B)"
                                     });
                                 }
                             }
