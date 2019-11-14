@@ -2653,8 +2653,8 @@ namespace BenchmarkServer
                                 job.Metadata.Add(new MeasurementMetadata
                                 {
                                     Name = eventData.PayloadByName("name").ToString(),
-                                    Aggregate = Enum.Parse<Operation>(eventData.PayloadByName("aggregate").ToString()),
-                                    Reduce = Enum.Parse<Operation>(eventData.PayloadByName("reduce").ToString()),
+                                    Aggregate = Enum.Parse<Operation>(eventData.PayloadByName("aggregate").ToString(), true),
+                                    Reduce = Enum.Parse<Operation>(eventData.PayloadByName("reduce").ToString(), true),
                                     ShortDescription = eventData.PayloadByName("shortDescription").ToString(),
                                     LongDescription = eventData.PayloadByName("longDescription").ToString(),
                                 });
