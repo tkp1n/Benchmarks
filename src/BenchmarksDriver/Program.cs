@@ -1408,27 +1408,27 @@ namespace BenchmarksDriver
                                     switch (metadata.Aggregate)
                                     {
                                         case Operation.Avg:
-                                            Log.Write($"{metadata.Name.PadRight(maxWidth)}: {measurements[metadata.Name].Average(x => Convert.ToDouble(x.Value))}");
+                                            Log.Write($"{(metadata.ShortDescription + ":").PadRight(maxWidth)}: {measurements[metadata.Name].Average(x => Convert.ToDouble(x.Value)).ToString(metadata.Format)}");
                                             break;
 
                                         case Operation.Count:
-                                            Log.Write($"{metadata.Name.PadRight(maxWidth)}: {measurements[metadata.Name].Count()}");
+                                            Log.Write($"{(metadata.ShortDescription + ":").PadRight(maxWidth)}: {measurements[metadata.Name].Count().ToString(metadata.Format)}");
                                             break;
 
                                         case Operation.Max:
-                                            Log.Write($"{metadata.Name.PadRight(maxWidth)}: {measurements[metadata.Name].Max(x => Convert.ToDouble(x.Value))}");
+                                            Log.Write($"{(metadata.ShortDescription + ":").PadRight(maxWidth)} {measurements[metadata.Name].Max(x => Convert.ToDouble(x.Value)).ToString(metadata.Format)}");
                                             break;
 
                                         case Operation.Median:
-                                            Log.Write($"{metadata.Name.PadRight(maxWidth)}: {Percentile(50)(measurements[metadata.Name].Select(x => Convert.ToDouble(x.Value)))}");
+                                            Log.Write($"{(metadata.ShortDescription + ":").PadRight(maxWidth)}: {Percentile(50)(measurements[metadata.Name].Select(x => Convert.ToDouble(x.Value))).ToString(metadata.Format)}");
                                             break;
 
                                         case Operation.Min:
-                                            Log.Write($"{metadata.Name.PadRight(maxWidth)}: {measurements[metadata.Name].Min(x => Convert.ToDouble(x.Value))}");
+                                            Log.Write($"{(metadata.ShortDescription + ":").PadRight(maxWidth)}: {measurements[metadata.Name].Min(x => Convert.ToDouble(x.Value)).ToString(metadata.Format)}");
                                             break;
 
                                         case Operation.Sum:
-                                            Log.Write($"{metadata.Name.PadRight(maxWidth)}: {measurements[metadata.Name].Sum(x => Convert.ToDouble(x.Value))}");
+                                            Log.Write($"{(metadata.ShortDescription + ":").PadRight(maxWidth)}: {measurements[metadata.Name].Sum(x => Convert.ToDouble(x.Value)).ToString(metadata.Format)}");
                                             break;
                                     }
                                 }

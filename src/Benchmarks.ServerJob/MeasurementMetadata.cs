@@ -14,6 +14,7 @@ namespace Benchmarks.ServerJob
 
         public string ShortDescription { get; set; }
         public string LongDescription { get; set; }
+        public string Format { get; set; }
     }
 
     public enum Operation
