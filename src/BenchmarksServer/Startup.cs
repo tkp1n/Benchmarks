@@ -2515,11 +2515,6 @@ namespace BenchmarkServer
                             {
                                 StartCollection(Path.Combine(benchmarksRepo, job.BasePath), job);
                             }
-
-                            if (job.CollectCounters)
-                            {
-                                StartCounters(job);
-                            }
                         }
                     }
                 }
@@ -2547,12 +2542,9 @@ namespace BenchmarkServer
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            if (job.CollectStartup)
+            if (job.CollectCounters)
             {
-                if (job.CollectCounters)
-                {
-                    StartCounters(job);
-                }
+                StartCounters(job);
             }
 
             StartMeasurement(job);
@@ -2584,11 +2576,6 @@ namespace BenchmarkServer
                     if (job.Collect)
                     {
                         StartCollection(Path.Combine(benchmarksRepo, job.BasePath), job);
-                    }
-
-                    if (job.CollectCounters)
-                    {
-                        StartCounters(job);
                     }
                 }
             }

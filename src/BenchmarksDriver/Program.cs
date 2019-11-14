@@ -275,9 +275,9 @@ namespace BenchmarksDriver
                 CommandOptionType.MultipleValue);
             var collectTraceOption = app.Option("--collect-trace",
                 "Collect a PerfView trace.", CommandOptionType.NoValue);
-            _serverCollectStartupOption = app.Option("--server-collect-startup",
+            _serverCollectStartupOption = app.Option("--server-trace-startup",
                 "Includes the startup phase in the server trace.", CommandOptionType.NoValue);
-            _clientCollectStartupOption = app.Option("--client-collect-startup",
+            _clientCollectStartupOption = app.Option("--client-trace-startup",
                 "Includes the startup phase in the client trace.", CommandOptionType.NoValue);
             _serverCollectCountersOption = app.Option("--server-collect-counters",
                 "Collect event counters on the server.", CommandOptionType.NoValue);
