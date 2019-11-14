@@ -61,7 +61,9 @@ namespace BenchmarksDriver
             _displayClientOutputOption,
             _displayServerOutputOption,
             _serverCollectStartupOption,
-            _clientCollectStartupOption
+            _clientCollectStartupOption,
+            _serverSdkOption,
+            _clientSdkOption
             ;
 
         private static Dictionary<string, string> _deprecatedArguments = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -312,8 +314,10 @@ namespace BenchmarksDriver
                 "Timeout for server jobs. e.g., 00:05:00", CommandOptionType.SingleValue);
             var frameworkOption = app.Option("--framework",
                 "TFM to use if automatic resolution based runtime should not be used. e.g., netcoreapp2.1", CommandOptionType.SingleValue);
-            var sdkOption = app.Option("--sdk",
-                "SDK version to use", CommandOptionType.SingleValue);
+            _serverSdkOption = app.Option("--server-sdk-version",
+                "SDK version to use on the server", CommandOptionType.SingleValue);
+            _clientSdkOption = app.Option("--client-sdk-version",
+                "SDK version to use on the client", CommandOptionType.SingleValue);
             _noGlobalJsonOption = app.Option("--no-global-json",
                 "Doesn't generate global.json", CommandOptionType.NoValue);
             _initializeOption = app.Option("--initialize",
@@ -735,9 +739,9 @@ namespace BenchmarksDriver
                 {
                     serverJob.Framework = frameworkOption.Value();
                 }
-                if (sdkOption.HasValue())
+                if (_serverSdkOption.HasValue())
                 {
-                    serverJob.SdkVersion = sdkOption.Value();
+                    serverJob.SdkVersion = _serverSdkOption.Value();
                 }
                 if (_noGlobalJsonOption.HasValue())
                 {
@@ -923,6 +927,10 @@ namespace BenchmarksDriver
                     clientJob.CollectStartup = true;
                 }
 
+                if (_clientSdkOption.HasValue())
+                {
+                    clientJob.SdkVersion = _clientSdkOption.Value();
+                }
 
                 //var mergedClientJob = new JObject(defaultJob);
                 //mergedClientJob.Merge(job);
