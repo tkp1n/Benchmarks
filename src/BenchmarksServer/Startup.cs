@@ -2657,6 +2657,7 @@ namespace BenchmarkServer
                                     Reduce = Enum.Parse<Operation>(eventData.PayloadByName("reduce").ToString(), true),
                                     ShortDescription = eventData.PayloadByName("shortDescription").ToString(),
                                     LongDescription = eventData.PayloadByName("longDescription").ToString(),
+                                    Format = eventData.PayloadByName("format").ToString(),
                                 });
                             }
                         }

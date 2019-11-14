@@ -1405,34 +1405,39 @@ namespace BenchmarksDriver
 
                                 foreach (var metadata in jobOnClient._serverJob.Metadata)
                                 {
+                                    double result = 0;
+
                                     switch (metadata.Aggregate)
                                     {
                                         case Operation.Avg:
-                                            Log.Write($"{(metadata.ShortDescription + ":").PadRight(maxWidth)}: {measurements[metadata.Name].Average(x => Convert.ToDouble(x.Value)).ToString(metadata.Format)}");
+                                            result = measurements[metadata.Name].Average(x => Convert.ToDouble(x.Value));
                                             break;
 
                                         case Operation.Count:
-                                            Log.Write($"{(metadata.ShortDescription + ":").PadRight(maxWidth)}: {measurements[metadata.Name].Count().ToString(metadata.Format)}");
+                                            result = measurements[metadata.Name].Count();
                                             break;
 
                                         case Operation.Max:
-                                            Log.Write($"{(metadata.ShortDescription + ":").PadRight(maxWidth)} {measurements[metadata.Name].Max(x => Convert.ToDouble(x.Value)).ToString(metadata.Format)}");
+                                            result = measurements[metadata.Name].Max(x => Convert.ToDouble(x.Value));
                                             break;
 
                                         case Operation.Median:
-                                            Log.Write($"{(metadata.ShortDescription + ":").PadRight(maxWidth)}: {Percentile(50)(measurements[metadata.Name].Select(x => Convert.ToDouble(x.Value))).ToString(metadata.Format)}");
+                                            result = Percentile(50)(measurements[metadata.Name].Select(x => Convert.ToDouble(x.Value)));
                                             break;
 
                                         case Operation.Min:
-                                            Log.Write($"{(metadata.ShortDescription + ":").PadRight(maxWidth)}: {measurements[metadata.Name].Min(x => Convert.ToDouble(x.Value)).ToString(metadata.Format)}");
+                                            result = measurements[metadata.Name].Min(x => Convert.ToDouble(x.Value));
                                             break;
 
                                         case Operation.Sum:
-                                            Log.Write($"{(metadata.ShortDescription + ":").PadRight(maxWidth)}: {measurements[metadata.Name].Sum(x => Convert.ToDouble(x.Value)).ToString(metadata.Format)}");
+                                            result = measurements[metadata.Name].Sum(x => Convert.ToDouble(x.Value));
                                             break;
                                     }
+
+                                    Console.WriteLine($"{(metadata.ShortDescription + ":").PadRight(maxWidth)} {result.ToString(metadata.Format)}");
+
                                 }
-                                
+
                                 //foreach (var measurement in jobOnClient._serverJob.Events)
                                 //{
                                 //    Log.Write($"{measurement.OccuredUtc} {measurement.Name}:{measurement.Value}");
