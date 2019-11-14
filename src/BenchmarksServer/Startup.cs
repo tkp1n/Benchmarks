@@ -2669,6 +2669,8 @@ namespace BenchmarkServer
                         }
 
                         measurement.Timestamp = eventData.TimeStamp;
+
+                        job.Measurements.Add(measurement);
                     };
 
                     source.Process();

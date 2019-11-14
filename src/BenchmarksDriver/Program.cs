@@ -1413,6 +1413,11 @@ namespace BenchmarksDriver
 
                                 foreach (var metadata in jobOnClient._serverJob.Metadata)
                                 {
+                                    if (!measurements.ContainsKey(metadata.Name))
+                                    {
+                                        continue;
+                                    }
+
                                     double result = 0;
 
                                     switch (metadata.Aggregate)
