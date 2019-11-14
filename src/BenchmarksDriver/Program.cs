@@ -1264,10 +1264,10 @@ namespace BenchmarksDriver
                         }
 
                         // Set the URL on which the server should be reached from the clients as an environment variable
-                        clientJob.EnvironmentVariables.Add("SERVER_URL", jobOnServer._serverJob.Url);
+                        clientJob.EnvironmentVariables.Add("SERVER_URL", jobOnServer.ServerJob.Url);
 
                         // Look for {{server-url}} placeholder in the client arguments
-                        clientJob.Arguments = clientJob.Arguments.Replace("{{server-url}}", jobOnServer._serverJob.Url);
+                        clientJob.Arguments = clientJob.Arguments.Replace("{{server-url}}", jobOnServer.ServerJob.Url);
 
                         var jobsOnClient = clientUris.Select(clientUri => new Job(clientJob, clientUri, _displayClientOutputOption.HasValue())).ToArray();
                         
@@ -1302,7 +1302,7 @@ namespace BenchmarksDriver
                             }
 
                             // Wait for all clients to stop
-                            while( !jobsOnClient.All(client => client._serverJob.State == ServerState.Stopped))
+                            while( !jobsOnClient.All(client => client.ServerJob.State == ServerState.Stopped))
                             {
                                 foreach (var jobOnClient in jobsOnClient)
                                 {
@@ -1321,14 +1321,14 @@ namespace BenchmarksDriver
                             // Wait until the server has stopped
                             var now = DateTime.UtcNow;
 
-                            while (jobOnServer._serverJob.State != ServerState.Stopped && (DateTime.UtcNow - now < _timeout))
+                            while (jobOnServer.ServerJob.State != ServerState.Stopped && (DateTime.UtcNow - now < _timeout))
                             {
                                 await jobOnServer.TryUpdateStateAsync();
 
                                 await Task.Delay(1000);
                             }
 
-                            if (jobOnServer._serverJob.State == ServerState.Stopped)
+                            if (jobOnServer.ServerJob.State == ServerState.Stopped)
                             {
                                 // Try to extract BenchmarkDotNet statistics
                                 //if (_clientJob.Client == Worker.BenchmarkDotNet)
@@ -1341,17 +1341,17 @@ namespace BenchmarksDriver
                                 Console.ForegroundColor = ConsoleColor.White;
                                 Log.Write($"Server job running for more than {_timeout}, stopping...");
                                 Console.ResetColor();
-                                jobOnServer._serverJob.State = ServerState.Failed;
+                                jobOnServer.ServerJob.State = ServerState.Failed;
                             }
                         }
 
-                        if (jobsOnClient.Any(client => client._serverJob.State == ServerState.Failed))
+                        if (jobsOnClient.Any(client => client.ServerJob.State == ServerState.Failed))
                         {
                             // Stop all client jobs
                             await Task.WhenAll(jobsOnClient.Select(client => client.StopAsync()));
                             await Task.WhenAll(jobsOnClient.Select(client => client.DeleteAsync()));
                         }
-                        else if (jobsOnClient.All(client => client._serverJob.State == ServerState.Stopped) && jobOnServer._serverJob.State != ServerState.Failed)
+                        else if (jobsOnClient.All(client => client.ServerJob.State == ServerState.Stopped) && jobOnServer.ServerJob.State != ServerState.Failed)
                         {
                             // Stop all client jobs
                             await Task.WhenAll(jobsOnClient.Select(client => client.StopAsync()));
@@ -1383,92 +1383,26 @@ namespace BenchmarksDriver
                             // Display Environment information
 
                             Log.Quiet("");
-                            Log.Quiet($"Server Environment");
+                            Log.Quiet($"Server ");
+                            Log.Quiet($"-------");
+                            Log.Quiet("");
+                            Log.Quiet($"SDK:                         {jobOnServer.ServerJob.SdkVersion}");
+                            Log.Quiet($"Runtime:                     {jobOnServer.ServerJob.RuntimeVersion}");
+                            Log.Quiet($"ASP.NET Core:                {jobOnServer.ServerJob.AspNetCoreVersion}");
+
+                            WriteMeasures(jobOnServer);
+
+                            Log.Quiet("");
+                            Log.Quiet($"Clients");
                             Log.Quiet($"-------------------");
                             Log.Quiet("");
-                            Log.Quiet($"SDK:                         {jobOnServer._serverJob.SdkVersion}");
-                            Log.Quiet($"Runtime:                     {jobOnServer._serverJob.RuntimeVersion}");
-                            Log.Quiet($"ASP.NET Core:                {jobOnServer._serverJob.AspNetCoreVersion}");
-
-                            Log.Quiet("");
-                            Log.Quiet($"Clients Environment");
-                            Log.Quiet($"-------------------");
-                            Log.Quiet("");
-                            Log.Quiet($"SDK:                         {jobsOnClient.First()._serverJob.SdkVersion}");
-                            Log.Quiet($"Runtime:                     {jobsOnClient.First()._serverJob.RuntimeVersion}");
-                            Log.Quiet($"ASP.NET Core:                {jobsOnClient.First()._serverJob.AspNetCoreVersion}");
-
-
-                            var serverCounters = jobOnServer._serverJob.ServerCounters;
-                            var workingSet = Math.Round(((double)serverCounters.Select(x => x.WorkingSet).DefaultIfEmpty(0).Max()) / (1024 * 1024), 3);
-                            var cpu = serverCounters.Select(x => x.CpuPercentage).DefaultIfEmpty(0).Max();
+                            Log.Quiet($"SDK:                         {jobsOnClient.First().ServerJob.SdkVersion}");
+                            Log.Quiet($"Runtime:                     {jobsOnClient.First().ServerJob.RuntimeVersion}");
+                            Log.Quiet($"ASP.NET Core:                {jobsOnClient.First().ServerJob.AspNetCoreVersion}");
 
                             foreach (var jobOnClient in jobsOnClient)
                             {
-                                Log.Quiet("");
-                                Log.Quiet("Client Results");
-                                Log.Quiet($"-------------------");
-                                Log.Quiet("");
-
-                                // Group by name for easy lookup
-                                var measurements = jobOnClient._serverJob.Measurements.GroupBy(x => x.Name).ToDictionary(x => x.Key, x => x.ToList());
-                                var maxWidth = jobOnClient._serverJob.Metadata.Max(x => x.ShortDescription.Length) + 2;
-
-                                var previousSource = "";
-
-                                foreach (var metadata in jobOnClient._serverJob.Metadata)
-                                {
-                                    if (!measurements.ContainsKey(metadata.Name))
-                                    {
-                                        continue;
-                                    }
-
-                                    if (previousSource != metadata.Source)
-                                    {
-                                        Log.Quiet("");
-                                        Log.Quiet($"{metadata.Source}:");
-                                        Log.Quiet($"");
-
-                                        previousSource = metadata.Source;
-                                    }
-
-                                    double result = 0;
-
-                                    switch (metadata.Aggregate)
-                                    {
-                                        case Operation.Avg:
-                                            result = measurements[metadata.Name].Average(x => Convert.ToDouble(x.Value));
-                                            break;
-
-                                        case Operation.Count:
-                                            result = measurements[metadata.Name].Count();
-                                            break;
-
-                                        case Operation.Max:
-                                            result = measurements[metadata.Name].Max(x => Convert.ToDouble(x.Value));
-                                            break;
-
-                                        case Operation.Median:
-                                            result = Percentile(50)(measurements[metadata.Name].Select(x => Convert.ToDouble(x.Value)));
-                                            break;
-
-                                        case Operation.Min:
-                                            result = measurements[metadata.Name].Min(x => Convert.ToDouble(x.Value));
-                                            break;
-
-                                        case Operation.Sum:
-                                            result = measurements[metadata.Name].Sum(x => Convert.ToDouble(x.Value));
-                                            break;
-                                    }
-
-                                    Console.WriteLine($"{(metadata.ShortDescription + ":").PadRight(maxWidth)} {result.ToString(metadata.Format)}");
-
-                                }
-
-                                //foreach (var measurement in jobOnClient._serverJob.Events)
-                                //{
-                                //    Log.Write($"{measurement.OccuredUtc} {measurement.Name}:{measurement.Value}");
-                                //}
+                                WriteMeasures(jobOnClient);
                             }
 
                             var statistics = new Statistics
@@ -1531,11 +1465,11 @@ namespace BenchmarksDriver
                             }
 
                             // Collect Trace
-                            if (jobOnServer._serverJob.Collect)
+                            if (jobOnServer.ServerJob.Collect)
                             {
                                 Log.Write($"Post-processing profiler trace, this can take 10s of seconds...");
 
-                                Log.Write($"Trace arguments: {jobOnServer._serverJob.CollectArguments}");
+                                Log.Write($"Trace arguments: {jobOnServer.ServerJob.CollectArguments}");
 
                                 var uri = serverJobUri + "/trace";
                                 response = await _httpClient.PostAsync(uri, new StringContent(""));
@@ -1550,23 +1484,23 @@ namespace BenchmarksDriver
                                         return 1;
                                     }
 
-                                    if (jobOnServer._serverJob.State == ServerState.TraceCollected)
+                                    if (jobOnServer.ServerJob.State == ServerState.TraceCollected)
                                     {
                                         break;
                                     }
-                                    else if (jobOnServer._serverJob.State == ServerState.TraceCollecting)
+                                    else if (jobOnServer.ServerJob.State == ServerState.TraceCollecting)
                                     {
                                         // Server is collecting the trace
                                     }
                                     else
                                     {
-                                        Log.Write($"Unexpected state: {jobOnServer._serverJob.State}");
+                                        Log.Write($"Unexpected state: {jobOnServer.ServerJob.State}");
                                     }
 
                                     await Task.Delay(1000);
                                 }
 
-                                var traceExtension = jobOnServer._serverJob.OperatingSystem == Benchmarks.ServerJob.OperatingSystem.Windows
+                                var traceExtension = jobOnServer.ServerJob.OperatingSystem == Benchmarks.ServerJob.OperatingSystem.Windows
                                     ? ".etl.zip"
                                     : ".trace.zip";
 
@@ -1783,7 +1717,7 @@ namespace BenchmarksDriver
                                             clientJob: clientJobs[0],
                                             connectionString: sqlConnectionString,
                                             tableName: _tableName,
-                                            path: jobOnServer._serverJob.Path,
+                                            path: jobOnServer.ServerJob.Path,
                                             session: session,
                                             description: description,
                                             statistics: average,
@@ -2311,6 +2245,69 @@ namespace BenchmarksDriver
 
                 return orderedList[nth];
             };
+        }
+
+        private static void WriteMeasures(Job job)
+        {
+            // Handle old server versions that don't expose measurements
+            if (!job.ServerJob.Measurements.Any() || !job.ServerJob.Metadata.Any())
+            {
+                return;
+            }
+
+            // Group by name for easy lookup
+            var measurements = job.ServerJob.Measurements.GroupBy(x => x.Name).ToDictionary(x => x.Key, x => x.ToList());
+            var maxWidth = job.ServerJob.Metadata.Max(x => x.ShortDescription.Length) + 2;
+
+            var previousSource = "";
+
+            foreach (var metadata in job.ServerJob.Metadata)
+            {
+                if (!measurements.ContainsKey(metadata.Name))
+                {
+                    continue;
+                }
+
+                if (previousSource != metadata.Source)
+                {
+                    Log.Quiet("");
+                    Log.Quiet($"## {metadata.Source}:");
+
+                    previousSource = metadata.Source;
+                }
+
+                double result = 0;
+
+                switch (metadata.Aggregate)
+                {
+                    case Operation.Avg:
+                        result = measurements[metadata.Name].Average(x => Convert.ToDouble(x.Value));
+                        break;
+
+                    case Operation.Count:
+                        result = measurements[metadata.Name].Count();
+                        break;
+
+                    case Operation.Max:
+                        result = measurements[metadata.Name].Max(x => Convert.ToDouble(x.Value));
+                        break;
+
+                    case Operation.Median:
+                        result = Percentile(50)(measurements[metadata.Name].Select(x => Convert.ToDouble(x.Value)));
+                        break;
+
+                    case Operation.Min:
+                        result = measurements[metadata.Name].Min(x => Convert.ToDouble(x.Value));
+                        break;
+
+                    case Operation.Sum:
+                        result = measurements[metadata.Name].Sum(x => Convert.ToDouble(x.Value));
+                        break;
+                }
+
+                Console.WriteLine($"{(metadata.ShortDescription + ":").PadRight(maxWidth)} {result.ToString(metadata.Format)}");
+
+            }
         }
     }
 }

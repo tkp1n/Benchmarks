@@ -823,8 +823,7 @@ namespace BenchmarkServer
                             {
                                 if (!job.Metadata.Any(x => x.Name == "benchmarks/cpu"))
                                 {
-                                    job.Metadata.Add(new MeasurementMetadata
-                                    {
+                                    job.Metadata.Add(new MeasurementMetadata {
                                         Source = "Host Process",
                                         Name = "benchmarks/cpu",
                                         Aggregate = Operation.Max,
@@ -846,6 +845,34 @@ namespace BenchmarkServer
                                         Format = "n0",
                                         LongDescription = "Amount of working set used by the process (B)",
                                         ShortDescription = "Working Set (B)"
+                                    });
+                                }
+
+                                if (!job.Metadata.Any(x => x.Name == "benchmarks/build-time"))
+                                {
+                                    job.Metadata.Add(new MeasurementMetadata
+                                    {
+                                        Source = "Host Process",
+                                        Name = "benchmarks/build-time",
+                                        Aggregate = Operation.Max,
+                                        Reduce = Operation.Max,
+                                        Format = "n0",
+                                        LongDescription = "How long it took to build the application",
+                                        ShortDescription = "Build Time (ms)"
+                                    });
+                                }
+
+                                if (!job.Metadata.Any(x => x.Name == "benchmarks/published-size"))
+                                {
+                                    job.Metadata.Add(new MeasurementMetadata
+                                    {
+                                        Source = "Host Process",
+                                        Name = "benchmarks/published-size",
+                                        Aggregate = Operation.Max,
+                                        Reduce = Operation.Max,
+                                        Format = "n0",
+                                        LongDescription = "The size of the published application",
+                                        ShortDescription = "Published Size (KB)"
                                     });
                                 }
                             }
@@ -1291,6 +1318,13 @@ namespace BenchmarkServer
             stopwatch.Stop();
 
             job.BuildTime = stopwatch.Elapsed;
+
+            job.Measurements.Add(new Measurement
+            {
+                Name = "benchmarks/build-time",
+                Timestamp = DateTime.UtcNow,
+                Value = stopwatch.ElapsedMilliseconds
+            });
 
             stopwatch.Reset();
 
@@ -1989,13 +2023,27 @@ namespace BenchmarkServer
 
             job.BuildTime = stopwatch.Elapsed;
 
+            job.Measurements.Add(new Measurement
+            {
+                Name = "benchmarks/build-time",
+                Timestamp = DateTime.UtcNow,
+                Value = stopwatch.ElapsedMilliseconds
+            });
+
             Log.WriteLine($"Application published successfully in {job.BuildTime.TotalMilliseconds} ms");
 
-            job.PublishedSize = DirSize(new DirectoryInfo(outputFolder));
+            var publishedSize = DirSize(new DirectoryInfo(outputFolder)) / 1024;
 
-            if (job.PublishedSize != 0)
+            if (publishedSize != 0)
             {
-                job.PublishedSize = job.PublishedSize / 1024;
+                job.PublishedSize = publishedSize;
+                
+                job.Measurements.Add(new Measurement
+                {
+                    Name = "benchmarks/published-size",
+                    Timestamp = DateTime.UtcNow,
+                    Value = publishedSize
+                });
             }
 
             Log.WriteLine($"Published size: {job.PublishedSize}");
