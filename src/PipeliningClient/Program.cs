@@ -127,10 +127,19 @@ namespace PipeliningClient
             Console.WriteLine($"Bad Responses:   {_errors:N0}");
             Console.WriteLine($"Socket Errors:   {_socketErrors:N0}");
 
-            BenchmarksEventSource.Log.Statistic("avg-rps", totalTps);
-            BenchmarksEventSource.Log.Statistic("status-2xx", _counter);
-            BenchmarksEventSource.Log.Statistic("bad-response", _errors);
-            BenchmarksEventSource.Log.Statistic("socket-errors", _socketErrors);
+
+            // If multiple samples are provided, take the max RPS, then sum the result from all clients
+            BenchmarksEventSource.Log.Metadata("avg-rps", "max", "sum", "RPS", "Requests per second");
+            BenchmarksEventSource.Log.Measure("avg-rps", totalTps);
+
+            BenchmarksEventSource.Log.Metadata("status-2xx", "sum", "sum", "Total Requests", "Total Requests");
+            BenchmarksEventSource.Log.Measure("status-2xx", _counter);
+
+            BenchmarksEventSource.Log.Metadata("bad-response", "sum", "sum", "Bad Responses", "Bad Responses");
+            BenchmarksEventSource.Log.Measure("bad-response", _errors);
+
+            BenchmarksEventSource.Log.Metadata("socket-errors", "sum", "sum", "Socket Errors", "Socket Errors");
+            BenchmarksEventSource.Log.Measure("socket-errors", _socketErrors);
         }
 
         public static async Task DoWorkAsync()

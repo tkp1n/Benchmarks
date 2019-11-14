@@ -2639,12 +2639,26 @@ namespace BenchmarkServer
                         // We only track event counters for System.Runtime
                         if (eventData.ProviderName == "Benchmarks")
                         {
-                            job.Measurements.Add(new Measurement
+                            if (eventData.EventName == "Measure")
                             {
-                                TimeStamp = eventData.TimeStamp,
-                                Name = eventData.PayloadByName("name").ToString(),
-                                Value = eventData.PayloadByName("value")
-                            });
+                                job.Measurements.Add(new Measurement
+                                {
+                                    Timestamp = eventData.TimeStamp,
+                                    Name = eventData.PayloadByName("name").ToString(),
+                                    Value = eventData.PayloadByName("value")
+                                });
+                            }
+                            else if (eventData.EventName == "Metadata")
+                            {
+                                job.Metadata.Add(new MeasurementMetadata
+                                {
+                                    Name = eventData.PayloadByName("name").ToString(),
+                                    Aggregate = Enum.Parse<Operation>(eventData.PayloadByName("aggregate").ToString()),
+                                    Reduce = Enum.Parse<Operation>(eventData.PayloadByName("reduce").ToString()),
+                                    ShortDescription = eventData.PayloadByName("shortDescription").ToString(),
+                                    LongDescription = eventData.PayloadByName("longDescription").ToString(),
+                                });
+                            }
                         }
                     };
 

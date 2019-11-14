@@ -129,6 +129,7 @@ namespace Benchmarks.ServerJob
         public ulong MemoryLimitInBytes { get; set; }
         public ConcurrentDictionary<string, ConcurrentQueue<string>> Counters { get; set; } = new ConcurrentDictionary<string, ConcurrentQueue<string>>();
         public ConcurrentBag<Measurement> Measurements { get; set; } = new ConcurrentBag<Measurement>();
+        public ConcurrentBag<MeasurementMetadata> Metadata { get; set; } = new ConcurrentBag<MeasurementMetadata>();
 
         /// <summary>
         /// The build log. This property is kept on the server side.

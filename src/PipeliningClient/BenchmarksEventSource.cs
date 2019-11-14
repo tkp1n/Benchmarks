@@ -19,9 +19,15 @@ namespace PipeliningClient
         }
 
         [Event(1, Level = EventLevel.Informational)]
-        public void Statistic(string name, long value)
+        public void Measure(string name, long value)
         {
             WriteEvent(1, name, value);
+        }
+
+        [Event(2, Level = EventLevel.Informational)]
+        public void Metadata(string name, string aggregate, string reduce, string shortDescription, string longDescription)
+        {
+            WriteEvent(2, name, aggregate, reduce, shortDescription, longDescription);
         }
     }
 }

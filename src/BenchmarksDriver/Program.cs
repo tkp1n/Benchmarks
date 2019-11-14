@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -1398,9 +1399,38 @@ namespace BenchmarksDriver
 
                             foreach (var jobOnClient in jobsOnClient)
                             {
-                                if (jobOnClient._serverJob.Measurements.Any())
+                                // Group by name for easy lookup
+                                var measurements = jobOnClient._serverJob.Measurements.GroupBy(x => x.Name).ToDictionary(x => x.Key, x => x.ToList());
+                                var maxWidth = jobOnClient._serverJob.Metadata.Max(x => x.Name.Length) + 2;
+
+                                foreach (var metadata in jobOnClient._serverJob.Metadata)
                                 {
-                                    Log.Write(JsonConvert.SerializeObject(jobOnClient._serverJob.Measurements, Formatting.Indented));
+                                    switch (metadata.Aggregate)
+                                    {
+                                        case Operation.Avg:
+                                            Log.Write($"{metadata.Name.PadRight(maxWidth)}: {measurements[metadata.Name].Average(x => Convert.ToDouble(x.Value))}");
+                                            break;
+
+                                        case Operation.Count:
+                                            Log.Write($"{metadata.Name.PadRight(maxWidth)}: {measurements[metadata.Name].Count()}");
+                                            break;
+
+                                        case Operation.Max:
+                                            Log.Write($"{metadata.Name.PadRight(maxWidth)}: {measurements[metadata.Name].Max(x => Convert.ToDouble(x.Value))}");
+                                            break;
+
+                                        case Operation.Median:
+                                            Log.Write($"{metadata.Name.PadRight(maxWidth)}: {Percentile(50)(measurements[metadata.Name].Select(x => Convert.ToDouble(x.Value)))}");
+                                            break;
+
+                                        case Operation.Min:
+                                            Log.Write($"{metadata.Name.PadRight(maxWidth)}: {measurements[metadata.Name].Min(x => Convert.ToDouble(x.Value))}");
+                                            break;
+
+                                        case Operation.Sum:
+                                            Log.Write($"{metadata.Name.PadRight(maxWidth)}: {measurements[metadata.Name].Sum(x => Convert.ToDouble(x.Value))}");
+                                            break;
+                                    }
                                 }
                                 
                                 //foreach (var measurement in jobOnClient._serverJob.Events)
