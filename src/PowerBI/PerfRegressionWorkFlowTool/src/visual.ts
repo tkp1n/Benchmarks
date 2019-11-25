@@ -43,33 +43,54 @@ export class Visual implements IVisual {
     private settings: VisualSettings;
     private textNode: Text;
     private tableNode: HTMLElement;
+    private leftButtonNode: HTMLElement;
+    private rightButtonNode: HTMLElement;
 
-    private prevValues: Map<string, string> = new Map<string, string>();
-    private currValues: Map<string, string> = new Map<string, string>();
-    private prevValue: string | number | boolean;
-    private currValue: string | number | boolean;
+    private selectedPoint: Map<string, string> = new Map<string, string>();
+    private leftValues: Map<string, string> = new Map<string, string>();
+    private rightValues: Map<string, string> = new Map<string, string>();
 
     constructor(options: VisualConstructorOptions) {
-        console.log('Visual constructor', options);
         this.target = options.element;
+
+        // title
+        this.target.appendChild(document.createElement("b")).innerText = "Perf Regression Tool";
+
+        // main display table
         this.tableNode = this.target.appendChild(document.createElement("table"));
         this.tableNode.style.border = "1px solid black";
         this.tableNode.style.borderCollapse = "collapse";
-        this.updateCount = 0;
-        if (typeof document !== "undefined") {
-            // const new_p: HTMLElement = document.createElement("p");
-            // new_p.appendChild(document.createTextNode("Update count:"));
-            // const new_em: HTMLElement = document.createElement("em");
-            // this.textNode = document.createTextNode(this.updateCount.toString());
-            // new_em.appendChild(this.textNode);
-            // new_p.appendChild(new_em);
-            // this.target.appendChild(new_p);
-        }
+        this.tableNode.innerHTML = "Click 2 points";
+
+        // Set left column button
+        this.leftButtonNode = this.target.appendChild(document.createElement("button"));
+        this.leftButtonNode.innerText = "Set left point";
+        this.leftButtonNode.onclick = () => {
+            this.leftValues = new Map<string, string>();
+            // copy selected point into left column
+            for (let i of this.selectedPoint.keys()) {
+                this.leftValues.set(i, this.selectedPoint.get(i));
+            }
+            // update table display
+            this.display();
+        };
+
+        // Set right column button
+        this.rightButtonNode = this.target.appendChild(document.createElement("button"));
+        this.rightButtonNode.innerText = "Set right point";
+        this.rightButtonNode.onclick = () => {
+            this.rightValues = new Map<string, string>();
+            // copy selected point into right column
+            for (let i of this.selectedPoint.keys()) {
+                this.rightValues.set(i, this.selectedPoint.get(i));
+            }
+            // update table display
+            this.display();
+        };
     }
 
     public update(options: VisualUpdateOptions) {
         //this.settings = Visual.parseSettings(options && options.dataViews && options.dataViews[0]);
-        console.log('Visual update', options);
         if (typeof this.textNode !== "undefined") {
             this.textNode.textContent = (this.updateCount++).toString();
         }
@@ -78,67 +99,64 @@ export class Visual implements IVisual {
             return;
         }
 
-        let map = new Map<string, string>();
-
         for (let i = 0; i < options.dataViews[0].categorical.categories.length; ++i) {
             const name = options.dataViews[0].categorical.categories[i].source.displayName;
             const value = options.dataViews[0].categorical.categories[i].values[0].valueOf();
 
-            map.set(name, value.toString());
-        }
-
-        if (this.prevValues.size === 0) {
-            this.prevValues = map;
-        } else if (this.currValues.size === 0) {
-            this.currValues = map;
-        } else {
-            this.prevValues = this.currValues;
-            this.currValues = map;
-        }
-
-        if (this.prevValues.size > 0 && this.currValues.size > 0) {
-            let s: string = "";
-            this.tableNode.innerHTML = "";
-            for (let k of this.prevValues.keys()) {
-                const tr = this.tableNode.appendChild(document.createElement("tr"));
-                let td = tr.appendChild(document.createElement("td"));
-                td.appendChild(document.createTextNode(k));
-                td.style.border = "1px solid black";
-                td.style.borderCollapse = "collapse";
-                td.onclick = () => {
-                    navigator.clipboard.writeText(td.childNodes[0].textContent);
-                };
-
-                let td1 = tr.appendChild(document.createElement("td"));
-                td1.appendChild(document.createTextNode(this.prevValues.get(k)));
-                td1.style.border = "1px solid black";
-                td1.style.borderCollapse = "collapse";
-                td1.onclick = () => {
-                    navigator.clipboard.writeText(td1.childNodes[0].textContent);
-                };
-
-                const td2 = tr.appendChild(document.createElement("td"));
-                td2.appendChild(document.createTextNode(this.currValues.get(k)));
-                td2.style.border = "1px solid black";
-                td2.style.borderCollapse = "collapse";
-                td2.onclick = () => {
-                    navigator.clipboard.writeText(td2.childNodes[0].textContent);
-                };
-            }
-
-            // this.prevValues.forEach((v, k) => {
-            //     s += k + " " + v;
-            // });
-            // this.currValues.forEach((v, k) => {
-            //     s += k + " " + v;
-            // });
-            //s += "</table>";
-            //this.textNode.textContent = s;
+            this.selectedPoint.set(name, value.toString());
         }
     }
 
     private static parseSettings(dataView: DataView): VisualSettings {
         return VisualSettings.parse(dataView) as VisualSettings;
+    }
+
+    private static setOnClick(td: HTMLTableDataCellElement) {
+        td.onclick = () => {
+            navigator.clipboard.writeText(td.childNodes[0].textContent);
+            td.style.backgroundColor = "lime";
+            setTimeout(() => {
+                td.style.backgroundColor = "white";
+            }, 1000);
+        };
+    }
+
+    private display() {
+        if (this.leftValues.size > 0 || this.rightValues.size > 0) {
+            this.tableNode.innerHTML = "";
+            let map = this.leftValues.size > 0 ? this.leftValues : this.rightValues;
+            for (let k of map.keys()) {
+                // Row name: e.g. CPU %
+                const tr = this.tableNode.appendChild(document.createElement("tr"));
+                let td = tr.appendChild(document.createElement("td"));
+                td.appendChild(document.createTextNode(k));
+                td.style.border = "1px solid black";
+                td.style.borderCollapse = "collapse";
+                Visual.setOnClick(td);
+
+                // Left point value
+                let td1 = tr.appendChild(document.createElement("td"));
+                td1.style.border = "1px solid black";
+                td1.style.borderCollapse = "collapse";
+                if (this.leftValues.has(k)) {
+                    td1.appendChild(document.createTextNode(this.leftValues.get(k)));
+                    Visual.setOnClick(td1);
+                } else {
+                    td1.innerText = "N/A";
+                }
+
+                // Right point value
+                const td2 = tr.appendChild(document.createElement("td"));
+                td2.style.border = "1px solid black";
+                td2.style.borderCollapse = "collapse";
+                if (this.rightValues.has(k)) {
+                    td2.appendChild(document.createTextNode(this.rightValues.get(k)));
+                    Visual.setOnClick(td2);
+                } else {
+                    td2.innerText = "N/A";
+                }
+            }
+        }
     }
 
     /**
