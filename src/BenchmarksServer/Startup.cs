@@ -3095,7 +3095,8 @@ namespace BenchmarkServer
                                 {
                                     Timestamp = eventData.TimeStamp,
                                     Name = eventData.PayloadByName("name").ToString(),
-                                    Value = eventData.PayloadByName("value")
+                                    Value = eventData.PayloadByName("value"),
+                                    Dimension = eventData.PayloadByName("dimension")?.ToString()
                                 });
                             }
                             else if (eventData.EventName == "Metadata")

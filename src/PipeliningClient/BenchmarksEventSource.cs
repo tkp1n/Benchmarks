@@ -25,6 +25,13 @@ namespace PipeliningClient
         }
 
         [Event(2, Level = EventLevel.Informational)]
+        public void Measure(string name, string dimension, long value)
+        {
+            WriteEvent(2, name, dimension, value);
+        }
+
+
+        [Event(3, Level = EventLevel.Informational)]
         public void Metadata(string name, string aggregate, string reduce, string shortDescription, string longDescription, string format)
         {
             WriteEvent(2, name, aggregate, reduce, shortDescription, longDescription, format);

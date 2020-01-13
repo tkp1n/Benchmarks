@@ -227,6 +227,8 @@ namespace PipeliningClient
                 foreach (var entry in _statistics)
                 {
                     Console.WriteLine($"| {entry.Key.ToString().PadRight(11)} | {entry.Value.ToString().PadRight(11)} |");
+                    BenchmarksEventSource.Log.Measure("pipelineclient/rps-by-connections", $"connections:{entry.Key}", entry.Value);
+
                 }
             }
         }
