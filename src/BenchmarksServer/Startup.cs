@@ -3091,13 +3091,25 @@ namespace BenchmarkServer
 
                             if (eventData.EventName == "Measure")
                             {
-                                job.Measurements.Add(new Measurement
+                                if (eventData.PayloadNames.Contains("dimension"))
                                 {
-                                    Timestamp = eventData.TimeStamp,
-                                    Name = eventData.PayloadByName("name").ToString(),
-                                    Value = eventData.PayloadByName("value"),
-                                    Dimension = eventData.PayloadByName("dimension")?.ToString()
-                                });
+                                    job.Measurements.Add(new Measurement
+                                    {
+                                        Timestamp = eventData.TimeStamp,
+                                        Name = eventData.PayloadByName("name").ToString(),
+                                        Value = eventData.PayloadByName("value"),
+                                        Dimension = eventData.PayloadByName("dimension").ToString()
+                                    });
+                                }
+                                else
+                                {
+                                    job.Measurements.Add(new Measurement
+                                    {
+                                        Timestamp = eventData.TimeStamp,
+                                        Name = eventData.PayloadByName("name").ToString(),
+                                        Value = eventData.PayloadByName("value"),
+                                    });
+                                }
                             }
                             else if (eventData.EventName == "Metadata")
                             {

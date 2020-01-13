@@ -24,6 +24,7 @@
 
     public enum Operation
     {
+        None,
         First,
         Last,
         Avg,

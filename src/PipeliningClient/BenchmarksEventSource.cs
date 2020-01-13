@@ -34,7 +34,7 @@ namespace PipeliningClient
         [Event(3, Level = EventLevel.Informational)]
         public void Metadata(string name, string aggregate, string reduce, string shortDescription, string longDescription, string format)
         {
-            WriteEvent(2, name, aggregate, reduce, shortDescription, longDescription, format);
+            WriteEvent(3, name, aggregate, reduce, shortDescription, longDescription, format);
         }
     }
 }

@@ -212,6 +212,7 @@ namespace PipeliningClient
             BenchmarksEventSource.Log.Metadata("pipelineclient/status-2xx", "sum", "sum", "Successful Requests", "Successful Requests", "n0");
             BenchmarksEventSource.Log.Metadata("pipelineclient/bad-response", "sum", "sum", "Bad Responses", "Bad Responses", "n0");
             BenchmarksEventSource.Log.Metadata("pipelineclient/socket-errors", "sum", "sum", "Socket Errors", "Socket Errors", "n0");
+            BenchmarksEventSource.Log.Metadata("pipelineclient/rps-by-connections", "none", "none", "RPS/Connection", "Requests per second by connections", "n0");
 
             BenchmarksEventSource.Log.Measure("pipelineclient/avg-rps", totalTps);
             BenchmarksEventSource.Log.Measure("pipelineclient/connections", Connections);

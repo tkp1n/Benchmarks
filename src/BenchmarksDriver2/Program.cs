@@ -1045,6 +1045,10 @@ namespace BenchmarksDriver
 
                 switch (metadata.Aggregate)
                 {
+                    case Operation.None:
+                        result = null;
+                        break;
+
                     case Operation.First:
                         result = measurements[metadata.Name].First().Value;
                         break;
@@ -1076,6 +1080,12 @@ namespace BenchmarksDriver
                     case Operation.Sum:
                         result = measurements[metadata.Name].Sum(x => Convert.ToDouble(x.Value));
                         break;
+                }
+
+                // No aggregate operation?
+                if (result == null)
+                {
+                    continue;
                 }
 
                 if (!String.IsNullOrEmpty(metadata.Format))
