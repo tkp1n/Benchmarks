@@ -443,7 +443,7 @@ namespace JobConsumer
         {
             var argumentsBuilder = new StringBuilder($"{DriverPath} --server {ServerUrl} --client {ClientUrl} --jobs {jobsFilePath} --session {sessionId}");
             
-            argumentsBuilder.Append(" --self-contained --aspNetCoreVersion Latest --runtimeVersion Latest --quiet");
+            argumentsBuilder.Append(" --self-contained --aspNetCoreVersion Latest --runtimeVersion Latest --verbose");
 
             if (!string.IsNullOrWhiteSpace(buildInstructions.ScenarioName) && !string.Equals("Default", buildInstructions.ScenarioName, StringComparison.OrdinalIgnoreCase))
             {
