@@ -21,4 +21,4 @@ pr:
 jobs:
 - job: One
   steps:
-  - bash: echo 'First step!'
+  - powershell: echo "First step!"
