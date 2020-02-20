@@ -22,5 +22,5 @@ jobs:
 - job: Plaintext
   steps:
   - powershell: |
-        cd ./src/BenchmarksDriver;
-        dotnet run -c release;
+        cd ./src/BenchmarksDriver2;
+        dotnet run -c release -- --config benchmarks.compose.yml --scenario plaintext --application.endpoints http://10.0.0.6:6001 --load.endpoints http://10.0.0.6:6002 --variable serverUri=http://10.0.0.6;
