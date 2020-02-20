@@ -21,5 +21,6 @@ pr:
 jobs:
 - job: Plaintext
   steps:
-  - powershell: cd ./src/BenchmarksDriver
-  - powershell: dotnet run -c release
+  - powershell: |
+        cd ./src/BenchmarksDriver;
+        dotnet run -c release;
