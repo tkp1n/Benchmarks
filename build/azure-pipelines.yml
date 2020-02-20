@@ -19,6 +19,6 @@ pr:
     - '*'
 
 jobs:
-- job: One
+- job: Plaintext
   steps:
-  - powershell: echo "First step!"
+  - powershell: dotnet --version
