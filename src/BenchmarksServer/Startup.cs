@@ -2872,7 +2872,7 @@ namespace BenchmarkServer
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && (job.MemoryLimitInBytes > 0 || job.CpuLimitRatio > 0))
             {
-                var cgcreate = ProcessUtil.Run("cgcreate", "-g memory,cfs_quota_us:benchmarks\"", log: true);
+                var cgcreate = ProcessUtil.Run("cgcreate", "-g memory,cpu:benchmarks\"", log: true);
 
                 if (cgcreate.ExitCode > 0)
                 {
@@ -2890,7 +2890,7 @@ namespace BenchmarkServer
                     ProcessUtil.Run("cgset", $"-r cpu.cfs_quota_us={Math.Floor(job.CpuLimitRatio * _defaultDockerCfsPeriod)} benchmarks", log: true);
                 }
 
-                commandLine = $"-g memory,cfs_quota_us:benchmarks {executable} {commandLine}";
+                commandLine = $"-g memory,cpu:benchmarks {executable} {commandLine}";
                 executable = "cgexec";
             }
 
