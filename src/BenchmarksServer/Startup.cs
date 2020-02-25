@@ -2884,10 +2884,18 @@ namespace BenchmarkServer
                 {
                     ProcessUtil.Run("cgset", $"-r memory.limit_in_bytes={job.MemoryLimitInBytes} benchmarks", log: true);
                 }
+                else
+                {
+                    ProcessUtil.Run("cgset", $"-r memory.limit_in_bytes=-1 benchmarks", log: true);
+                }
 
                 if (job.CpuLimitRatio > 0)
                 {
                     ProcessUtil.Run("cgset", $"-r cpu.cfs_quota_us={Math.Floor(job.CpuLimitRatio * _defaultDockerCfsPeriod)} benchmarks", log: true);
+                }
+                else
+                {
+                    ProcessUtil.Run("cgset", $"-r cpu.cfs_quota_us=-1 benchmarks", log: true);
                 }
 
                 commandLine = $"-g memory,cpu:benchmarks {executable} {commandLine}";
