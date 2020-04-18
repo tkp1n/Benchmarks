@@ -69,7 +69,7 @@ namespace BenchmarksDriver
             { "--clientName", "--client-name" }
         };
 
-        private static Dictionary<string, string> _synonymArguments = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        private static Dictionary<string, string> _aliasArguments = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "--aspnet", "--aspnetcoreversion" },
             { "--runtime", "--runtimeversion" },
@@ -103,10 +103,10 @@ namespace BenchmarksDriver
                     Log.Write($"WARNING: '{arg}' has been deprecated, in the future please use '{mappedArg}'.");
                     args[i] = mappedArg;
                 }
-                else if (_synonymArguments.TryGetValue(arg, out var synonymArg))
+                else if (_aliasArguments.TryGetValue(arg, out var aliasArg))
                 {
                     // We don't need to display a warning
-                    args[i] = synonymArg;
+                    args[i] = aliasArg;
                 }
             }
 
