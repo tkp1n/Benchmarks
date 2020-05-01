@@ -22,6 +22,7 @@ jobs:
   - powershell: |
         echo "start"
         cd ./src/BenchmarksBot
+        dotnet --version
         dotnet run -c release -- --table $(sql.table) --repositoryId $(github.repositoryId)
         echo "end"
 
