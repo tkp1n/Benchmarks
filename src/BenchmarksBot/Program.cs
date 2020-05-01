@@ -49,6 +49,8 @@ namespace BenchmarksBot
 
         static async Task Main(string[] args)
         {
+            Console.WriteLine("test");
+
             var config = new ConfigurationBuilder()
                 .AddEnvironmentVariables(prefix: "BENCHMARKSBOT_")
                 .AddCommandLine(args)
