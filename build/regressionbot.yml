@@ -23,8 +23,8 @@ jobs:
         echo "start"
         cd ./src/BenchmarksBot
         dotnet --version
-        dotnet build
-        dotnet run -c release -- --table $(sql.table) --repositoryId $(github.repositoryId)
+        dotnet build -c release -o out
+        dotnet out/BenchmarksBot.dll --table $(sql.table) --repositoryId $(github.repositoryId)
         echo "end"
 
     env:
