@@ -20,9 +20,10 @@ jobs:
   timeoutInMinutes: 10
   steps:
   - powershell: |
+        echo "start"
         cd ./src/BenchmarksBot
-        dotnet run -c release -- `
-            --table $(sql.table) --repositoryId $(github.repositoryId)
+        dotnet run -c release -- --table $(sql.table) --repositoryId $(github.repositoryId)
+        echo "end"
 
     env:
         BENCHMARKSBOT_ConnectionString: $(sql.connectionstring)
