@@ -53,7 +53,7 @@ namespace BenchmarkServer
          */
 
         // Substituion values when "Latest" is passed as the version
-        private static string LatestTargetFramework = "netcoreapp5.0";
+        private static string LatestTargetFramework = "net5.0";
         private static string LatestChannel = "5.0";
 
         // Substituion values when "Current" is passed as the version
@@ -1993,7 +1993,7 @@ namespace BenchmarkServer
                 }
                 else if (runtimeVersion.StartsWith("5.0"))
                 {
-                    targetFramework = "netcoreapp5.0";
+                    targetFramework = "net5.0";
                 }
             }
 
@@ -2345,7 +2345,7 @@ namespace BenchmarkServer
                     buildParameters += $"/p:MicrosoftNETPlatformLibrary=Microsoft.NETCore.App ";
                 }
             }
-            else if (targetFramework == "netcoreapp5.0")
+            else if (targetFramework == "net5.0")
             {
                 buildParameters += $"/p:MicrosoftNETCoreApp50PackageVersion={runtimeVersion} ";
                 buildParameters += $"/p:GenerateErrorForMissingTargetingPacks=false ";
@@ -2664,7 +2664,7 @@ namespace BenchmarkServer
 
                     break;
 
-                case "netcoreapp5.0":
+                case "net5.0":
 
                     await DownloadFileAsync(String.Format(_aspNetCoreDependenciesUrl, "master/eng/Versions.props"), aspNetCoreDependenciesPath, maxRetries: 5, timeout: 10);
                     latestRuntimeVersion = XDocument.Load(aspNetCoreDependenciesPath).Root
