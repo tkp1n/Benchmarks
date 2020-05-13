@@ -6,6 +6,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Wrk2Client\BenchmarksEventSource.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="scripts\pipeline.lua">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
