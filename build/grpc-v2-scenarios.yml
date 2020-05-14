@@ -57,10 +57,10 @@ parameters:
   default:
     - displayName: "Call: Unary"
       arguments: --variable scenario=unary --property scenario=unary
-    - displayName: "Call: Server Streaming"
-      arguments: --variable scenario=serverstreaming --property scenario=serverstreaming
-    - displayName: "Call: Ping Pong Streaming"
-      arguments: --variable scenario=pingpongstreaming --property scenario=pingpongstreaming
+#    - displayName: "Call: Server Streaming"
+#      arguments: --variable scenario=serverstreaming --property scenario=serverstreaming
+#    - displayName: "Call: Ping Pong Streaming"
+#      arguments: --variable scenario=pingpongstreaming --property scenario=pingpongstreaming
 
 - name: protocols
   type: object
@@ -99,7 +99,7 @@ steps:
           messageBody: |
             {
               "name": "benchmarksdriver2",
-              "args": [ "--application.channel edge --application.framework netcoreapp5.0 --table GrpcBenchmarks --sql SQL_CONNECTION_STRING --session $(session) --profile ${{ parameters.profile }} --no-metadata --no-measurements --load.variables.duration ${{ parameters.duration }} --load.variables.warmup ${{ parameters.warmup }} ${{ s.arguments }} ${{ protocol.arguments }} ${{ stream.arguments }} --property scenario=unary --property payload=0 --variable body=AAAAAAcKBVdvcmxk --variable path=/grpc.testing.BenchmarkService/UnaryCall" ]	
+              "args": [ "--application.channel edge --application.framework netcoreapp5.0 --table GrpcBenchmarks --session $(session) --profile ${{ parameters.profile }} --no-metadata --no-measurements --load.variables.duration ${{ parameters.duration }} --load.variables.warmup ${{ parameters.warmup }} ${{ s.arguments }} ${{ protocol.arguments }} ${{ stream.arguments }} --property scenario=unary --property payload=0 --variable body=AAAAAAcKBVdvcmxk --variable path=/grpc.testing.BenchmarkService/UnaryCall" ]	
             }
 - ${{ each s in parameters.scenarios }}:
   - ${{ each callType in parameters.callTypes }}:
@@ -115,5 +115,5 @@ steps:
               messageBody: |
                 {
                   "name": "benchmarksdriver2",
-                  "args": [ "--application.channel edge --load.channel edge --application.framework netcoreapp5.0 --load.framework netcoreapp5.0 --table GrpcBenchmarks --sql SQL_CONNECTION_STRING --session $(session) --profile ${{ parameters.profile }} --no-metadata --no-measurements --load.variables.duration ${{ parameters.duration }} --load.variables.warmup ${{ parameters.warmup }} ${{ s.arguments }} ${{ callType.arguments }} ${{ payload.arguments }} ${{ protocol.arguments }} ${{ stream.arguments }}" ]
+                  "args": [ "--application.channel edge --load.channel edge --application.framework netcoreapp5.0 --load.framework netcoreapp5.0 --table GrpcBenchmarks --session $(session) --profile ${{ parameters.profile }} --no-metadata --no-measurements --load.variables.duration ${{ parameters.duration }} --load.variables.warmup ${{ parameters.warmup }} ${{ s.arguments }} ${{ callType.arguments }} ${{ payload.arguments }} ${{ protocol.arguments }} ${{ stream.arguments }}" ]
                 }

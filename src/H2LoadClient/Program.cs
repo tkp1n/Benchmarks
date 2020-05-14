@@ -231,9 +231,9 @@ namespace H2LoadClient
 
                 switch (unit)
                 {
-                    case "s": return value / 1000;
+                    case "s": return value * 1000;
                     case "ms": return value;
-                    case "us": return value * 1000;
+                    case "us": return value / 1000;
 
                     default:
                         Log("Failed to parse latency unit: " + unit);
