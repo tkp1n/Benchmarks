@@ -11,26 +11,9 @@ namespace Benchmarks.Controllers
     [ApiController]
     public class JsonController : Controller
     {
-        private static readonly DateTimeOffset BaseDateTime = new DateTimeOffset(new DateTime(2019, 04, 23));
-
-        private static readonly List<Entry> _entries2MB = Enumerable.Range(1, 5250).Select(i => new Entry
-        {
-            Attributes = new Attributes
-            {
-                Created = BaseDateTime.AddDays(i),
-                Enabled = true,
-                Expires = BaseDateTime.AddDays(i).AddYears(1),
-                NotBefore = BaseDateTime,
-                RecoveryLevel = "Purgeable",
-                Updated = BaseDateTime.AddSeconds(i),
-            },
-            ContentType = "application/xml",
-            Id = "https://benchmarktest.id/item/value" + i,
-            Tags = new[] { "test", "perf", "json" },
-        }).ToList();
-
-        private static readonly List<Entry> _entries4k = _entries2MB.Take(8).ToList();
-        private static readonly List<Entry> _entries100k = _entries2MB.Take(300).ToList();
+        private static readonly List<Entry> _entries4k = Entry.Create(8).ToList();
+        private static List<Entry> _entriesNk;
+        private static int previousSizeInBytes;
 
         [HttpGet("/json-helloworld")]
         [Produces("application/json")]
@@ -43,13 +26,19 @@ namespace Benchmarks.Controllers
         [Produces("application/json")]
         public List<Entry> Json2k() => _entries4k;
 
-        [HttpGet("/json100k")]
+        [HttpGet("/jsonNbytes/{sizeInBytes}")]
         [Produces("application/json")]
-        public List<Entry> Json100k() => _entries100k;
+        public List<Entry> JsonNk([FromRoute] int sizeInBytes)
+        {
+            if (_entriesNk is null || sizeInBytes != previousSizeInBytes)
+            {
+                var numItems = sizeInBytes / 340; // ~ 340 bytes per item
+                _entriesNk = Entry.Create(numItems);
+                previousSizeInBytes = sizeInBytes;
+            }
 
-        [HttpGet("/json2M")]
-        [Produces("application/json")]
-        public List<Entry> Json2M() => _entries2MB;
+            return _entriesNk;
+        }
 
         [HttpPost("/jsoninput")]
         [Consumes("application/json")]
@@ -63,6 +52,27 @@ namespace Benchmarks.Controllers
         public string Id { get; set; }
         public bool Managed { get; set; }
         public string[] Tags { get; set; }
+
+        public static List<Entry> Create(int n)
+        {
+            var baseDateTime = new DateTimeOffset(new DateTime(2019, 04, 23));
+
+            return Enumerable.Range(1, n).Select(i => new Entry
+            {
+                Attributes = new Attributes
+                {
+                    Created = baseDateTime.AddDays(i),
+                    Enabled = true,
+                    Expires = baseDateTime.AddDays(i).AddYears(1),
+                    NotBefore = baseDateTime,
+                    RecoveryLevel = "Purgeable",
+                    Updated = baseDateTime.AddSeconds(i),
+                },
+                ContentType = "application/xml",
+                Id = "https://benchmarktest.id/item/value" + i,
+                Tags = new[] { "test", "perf", "json" },
+            }).ToList();
+        }
     }
 
     public partial class Attributes

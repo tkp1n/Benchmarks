@@ -49,17 +49,17 @@ scenarios:
       variables:
         path: /json2k
 
-  # 100k json output.
-  MvcJsonOutput100k:
+  # 60k json output.
+  MvcJsonOutput60k:
     application:
       job: mvcServer
     load:
       job: wrk
       variables:
-        path: /json100k
+        path: /jsonNbytes/60000
 
-  # 100k json output.
-  MvcJsonNetOutput100k:
+  # 60k json output.
+  MvcJsonNetOutput60k:
     application:
       job: mvcServer
       variables:
@@ -67,7 +67,7 @@ scenarios:
     load:
       job: wrk
       variables:
-        path: /json100k
+        path: /jsonNbytes/60000
 
   # 2M json output
   MvcJsonOutput2M:
@@ -76,7 +76,7 @@ scenarios:
     load:
       job: wrk
       variables:
-        path: /json2m
+        path: /jsonNbytes/2097152
 
   # 2M json output (Newtonsoft.Json)
   MvcJsonNetOutput2M:
@@ -87,7 +87,7 @@ scenarios:
     load:
       job: wrk
       variables:
-        path: /json2m
+        path: /jsonNbytes/2097152
 
   # Sending 2k Json to Mvc
   MvcJsonInput2k:
@@ -111,8 +111,8 @@ scenarios:
         path: /JsonInput
         script: https://raw.githubusercontent.com/aspnet/Benchmarks/master/scripts/mvcjsoninput.lua
 
-  # Sending 100k Json to Mvc
-  MvcJsonInput100k:
+  # Sending 60k Json to Mvc
+  MvcJsonInput60k:
     application:
       job: mvcServer
     load:
@@ -120,10 +120,10 @@ scenarios:
       variables:
         path: /JsonInput
         script: https://raw.githubusercontent.com/aspnet/Benchmarks/master/scripts/mvcjsoninput.lua
-        scriptArguments: 102400
+        scriptArguments: 60000
 
-  # Sending 100k Json to Mvc (Json.NET)
-  MvcJsonNetInput100k:
+  # Sending 60k Json to Mvc (Json.NET)
+  MvcJsonNetInput60k:
     application:
       job: mvcServer
       variables:
@@ -133,7 +133,7 @@ scenarios:
       variables:
         path: /JsonInput
         script: https://raw.githubusercontent.com/aspnet/Benchmarks/master/scripts/mvcjsoninput.lua
-        scriptArguments: 102400
+        scriptArguments: 60000
 
   # 2M json output
   MvcJsonInput2M:
