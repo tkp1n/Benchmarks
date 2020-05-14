@@ -11,7 +11,7 @@ jobs:
   wrk:
     source:
       repository: https://github.com/aspnet/benchmarks.git
-      branchOrCommit: master
+      branchOrCommit: test
       project: src/WrkClient/WrkClient.csproj
     readyStateText: 'Running '
     sdkVersion: 3.1.102

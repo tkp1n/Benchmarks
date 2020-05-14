@@ -89,7 +89,7 @@ namespace WrkClient
 
             Console.WriteLine(output);
 
-            BenchmarksEventSource.Log.Metadata("wrk/rps", "max", "sum", "Req\\sec", "Requests per second", "n0");
+            BenchmarksEventSource.Log.Metadata("wrk/rps", "max", "sum", "Requests/sec", "Requests per second", "n0");
             BenchmarksEventSource.Log.Metadata("wrk/requests", "max", "sum", "Requests", "Total number of requests", "n0");
             BenchmarksEventSource.Log.Metadata("wrk/latency/mean", "max", "sum", "Mean latency (ms)", "Mean latency (ms)", "n2");
             BenchmarksEventSource.Log.Metadata("wrk/latency/max", "max", "sum", "Max latency (ms)", "Max latency (ms)", "n2");
