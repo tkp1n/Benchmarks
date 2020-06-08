@@ -20,6 +20,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+#if NETCOREAPP5_0
+using System.IO.Pipelines;
+using IoUring.Transport;
+#endif
+
 namespace Benchmarks
 {
     public class Program
@@ -174,6 +179,24 @@ namespace Benchmarks
                         Console.WriteLine($"Using Sockets with {socketOptions.IOQueueCount} threads");
                     });
                 }
+#if NETCOREAPP5_0
+                else if (string.Equals(kestrelTransport, "IoUring", StringComparison.OrdinalIgnoreCase))
+                {
+                    webHostBuilder.ConfigureServices(services =>
+                    {
+                        services.AddIoUringTransport(options =>
+                        {
+                            options.ApplicationSchedulingMode = PipeScheduler.Inline;
+                            if (threadCount > 0)
+                            {
+                                options.ThreadCount = threadCount;
+                            }
+
+                            Console.WriteLine($"Using io_uring with {options.ThreadCount} threads");
+                        });
+                    });
+                }
+#endif
                 else if (string.IsNullOrEmpty(kestrelTransport))
                 {
                     throw new InvalidOperationException($"Transport must be specified");

@@ -126,6 +126,8 @@
     <PackageReference Include="Npgsql" Version="$(NpgsqlVersion)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(MicrosoftEntityFrameworkCoreSqlServerVersion31)" />
 
+    <PackageReference Include="IoUring.Transport" Version="0.3.0-beta1" />
+
     <!-- The EF provider doesn't handle 3.0
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="$(PomeloEntityFrameworkCoreMySqlVersion30)" />
     -->
